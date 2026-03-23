@@ -186,8 +186,7 @@ input[type="checkbox"] {
 }
 
 .note-wrap[data-pinned="true"] {
-  outline: 1px solid CanvasText;
-  outline-offset: 2px;
+  box-shadow: 0 0.18rem 0.45rem rgb(0 0 0 / 0.16);
 }
 
 .feed-bar {

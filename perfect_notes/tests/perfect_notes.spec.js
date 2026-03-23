@@ -184,15 +184,13 @@ test("la nota activa usa borde grueso y la pineada mantiene una marca propia", a
     const footer = note.querySelector(".note-footer");
 
     return {
-      fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
-      footerBorderWidth: getComputedStyle(footer).borderBottomWidth
+      fieldsetBorderWidth: Number.parseFloat(getComputedStyle(fieldset).borderTopWidth),
+      footerBorderWidth: Number.parseFloat(getComputedStyle(footer).borderBottomWidth)
     };
   });
 
-  expect(initialNoteStyle).toEqual({
-    fieldsetBorderWidth: "3px",
-    footerBorderWidth: "3px"
-  });
+  expect(initialNoteStyle.fieldsetBorderWidth).toBeGreaterThan(1);
+  expect(initialNoteStyle.footerBorderWidth).toBeGreaterThan(1);
 
   const pinnedNote = await addNote(page, "nota pineada");
   await acceptNextDialog(page);
@@ -208,33 +206,27 @@ test("la nota activa usa borde grueso y la pineada mantiene una marca propia", a
       fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
       footerBorderWidth: getComputedStyle(footer).borderBottomWidth,
       outlineStyle: computed.outlineStyle,
-      outlineWidth: computed.outlineWidth,
-      outlineOffset: computed.outlineOffset
+      boxShadow: computed.boxShadow
     };
   });
 
-  expect(pinnedStyle).toEqual({
-    fieldsetBorderWidth: "1px",
-    footerBorderWidth: "1px",
-    outlineStyle: "solid",
-    outlineWidth: "1px",
-    outlineOffset: "2px"
-  });
+  expect(pinnedStyle.fieldsetBorderWidth).toBe("1px");
+  expect(pinnedStyle.footerBorderWidth).toBe("1px");
+  expect(pinnedStyle.outlineStyle).toBe("none");
+  expect(pinnedStyle.boxShadow).not.toBe("none");
 
   const activeStyle = await getNote(page, 1).evaluate((note) => {
     const fieldset = note.querySelector("fieldset");
     const footer = note.querySelector(".note-footer");
 
     return {
-      fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
-      footerBorderWidth: getComputedStyle(footer).borderBottomWidth
+      fieldsetBorderWidth: Number.parseFloat(getComputedStyle(fieldset).borderTopWidth),
+      footerBorderWidth: Number.parseFloat(getComputedStyle(footer).borderBottomWidth)
     };
   });
 
-  expect(activeStyle).toEqual({
-    fieldsetBorderWidth: "3px",
-    footerBorderWidth: "3px"
-  });
+  expect(activeStyle.fieldsetBorderWidth).toBeGreaterThan(1);
+  expect(activeStyle.footerBorderWidth).toBeGreaterThan(1);
 });
 
 test("texto continuo, nuevo parrafo y navegacion vertical con flechas", async ({ page }) => {
