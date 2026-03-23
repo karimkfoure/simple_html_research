@@ -26,14 +26,14 @@ import { formatNoteStamp } from "./timestamp.js";
 
 const STAMP_REFRESH_INTERVAL_MS = 30 * 1000;
 
-export function createPerfectNotesApp({ document, window }) {
+export function createPerfectNotesApp({ document, window, noteHintSource } = {}) {
   const notesEl = document.querySelector("#notes");
   const noteTemplate = document.querySelector("#note-template");
   const blockTemplate = document.querySelector("#block-template");
   const insertNoteButton = document.querySelector('[data-action="insert-note"]');
   const titleMeasureCanvas = document.createElement("canvas");
   const titleMeasureContext = titleMeasureCanvas.getContext("2d");
-  const state = createState();
+  const state = createState({ noteHintSource });
 
   initializeState(state);
   state.selectedNoteId = state.notes[0].id;

@@ -1,12 +1,14 @@
-import { DEFAULT_EDITOR_NAME, getNextBodyHint, getNextTitleHint } from "./helpers.js";
+import { DEFAULT_EDITOR_NAME } from "./helpers.js";
+import { defaultNoteHintSource } from "./note-hint-source.js";
 
-export function createState() {
+export function createState({ noteHintSource = defaultNoteHintSource } = {}) {
   return {
     nextNoteId: 1,
     nextBlockId: 1,
     selectedNoteId: null,
     selectedBlockId: null,
-    notes: []
+    notes: [],
+    noteHintSource
   };
 }
 
@@ -21,8 +23,8 @@ function createNote(state, { title = "", blocks = null } = {}) {
     id: state.nextNoteId++,
     title,
     blocks: blocks ?? [createBlock(state, "text")],
-    titleHint: getNextTitleHint(state.notes),
-    bodyHint: getNextBodyHint(),
+    titleHint: state.noteHintSource.getTitleHint(state.notes),
+    bodyHint: state.noteHintSource.getBodyHint(),
     pinned: false,
     updatedBy: DEFAULT_EDITOR_NAME,
     updatedAt: new Date().toISOString()
