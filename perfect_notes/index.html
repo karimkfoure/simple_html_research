@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" href="data:," />
+    <title>Notas</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 1rem;
+        font: 17px/1.45 system-ui, sans-serif;
+      }
+
+      main {
+        width: min(100%, 44rem);
+        margin-inline: auto;
+      }
+
+      .note-wrap + .note-wrap {
+        margin-top: 0.9rem;
+      }
+
+      fieldset {
+        position: relative;
+        margin: 0;
+        min-inline-size: 0;
+        border: 1px solid;
+        padding: 0.55rem 0.7rem 0.7rem;
+      }
+
+      legend {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        inline-size: 100%;
+        max-width: 100%;
+        padding: 0 0.2rem;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 2.4rem;
+        padding: 0.45rem 0;
+        border: 0;
+        resize: none;
+        overflow: hidden;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        line-height: inherit;
+      }
+
+      textarea:focus {
+        outline: none;
+      }
+
+      .note-title {
+        display: block;
+        width: auto;
+        min-width: 1ch;
+        font-weight: 600;
+      }
+
+      .note-title::placeholder {
+        color: #9a9a9a;
+        opacity: 1;
+        font-weight: 400;
+      }
+
+      .block-text::placeholder {
+        color: #9a9a9a;
+        opacity: 1;
+      }
+
+      .block-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .block[data-type="check"] > .block-row {
+        grid-template-columns: 1.55rem minmax(0, 1fr) auto;
+        gap: 0.45rem;
+      }
+
+      .block[data-type="text"] > .block-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.45rem;
+      }
+
+      .toggle {
+        display: grid;
+        place-items: center;
+        min-block-size: 2.4rem;
+      }
+
+      input[type="checkbox"] {
+        margin: 0;
+        inline-size: 1rem;
+        block-size: 1rem;
+      }
+
+      .adjust {
+        display: none;
+        align-items: center;
+        gap: 0.35rem;
+        min-block-size: 2.4rem;
+      }
+
+      .block[data-selected="true"] > .block-row .adjust {
+        display: flex;
+      }
+
+      .block[data-done="true"] > .block-row textarea {
+        text-decoration: line-through;
+      }
+
+      .children {
+        margin-left: 2rem;
+      }
+
+      .block-actions {
+        display: none;
+        flex-wrap: wrap;
+        gap: 0.15rem 0.75rem;
+      }
+
+      .block[data-selected="true"] > .block-actions {
+        display: flex;
+      }
+
+      .block-actions {
+        padding: 0 0 0.2rem 0;
+      }
+
+      .block[data-type="check"] > .block-actions {
+        padding-left: 2rem;
+      }
+
+      .note-footer {
+        display: flex;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.25rem 0.75rem;
+        padding: 0.2rem 0.2rem 0 0;
+        color: #777;
+        font-size: 0.92rem;
+      }
+
+      .note-head-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        flex: 0 0 auto;
+        margin-right: -0.45rem;
+      }
+
+      .note-head-actions button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        inline-size: 2rem;
+        block-size: 2rem;
+        min-block-size: 2rem;
+        padding: 0;
+        border: 1px solid currentColor;
+        border-radius: 999px;
+        text-decoration: none;
+        color: inherit;
+      }
+
+      .note-stamp {
+        text-align: right;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .note-action-icon {
+        inline-size: 1rem;
+        block-size: 1rem;
+        display: block;
+      }
+
+      .note-pin .note-action-icon {
+        inline-size: 1.05rem;
+        block-size: 1.05rem;
+      }
+
+      .note-pin[aria-pressed="true"] {
+        border-color: #777;
+        background: #777;
+        color: Canvas;
+      }
+
+      .note-delete {
+        opacity: 0.8;
+      }
+
+      .note-wrap[data-pinned="true"] fieldset {
+        border-width: 3px;
+      }
+
+      .feed-action[data-variant="top"] {
+        padding: 0.8rem 0 1rem;
+      }
+
+      .feed-action[data-variant="top"] button {
+        width: 100%;
+        min-block-size: 2.7rem;
+        padding-inline: 0.8rem;
+        border: 1px dashed;
+        font-weight: 600;
+        text-align: left;
+        text-decoration: none;
+      }
+
+      button {
+        min-block-size: 2.25rem;
+        padding: 0.2rem 0;
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        text-decoration: underline;
+      }
+
+      .adjust button {
+        min-block-size: 2rem;
+        min-width: 1.6rem;
+        padding: 0;
+        text-decoration: none;
+      }
+
+      button[hidden] {
+        display: none;
+      }
+
+      @media (max-width: 40rem) {
+        body {
+          padding: 0.75rem;
+        }
+
+        button {
+          min-block-size: 2.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main id="notes" aria-label="Listado de notas"></main>
+
+    <template id="note-template">
+      <section class="note-wrap">
+        <fieldset>
+          <legend>
+            <textarea
+              class="note-title"
+              rows="1"
+              spellcheck="true"
+              autocapitalize="sentences"
+              aria-label="Título de la nota"
+            ></textarea>
+            <div class="note-head-actions">
+              <button type="button" class="note-pin" data-action="toggle-pin" aria-label="Pinear nota" title="Pinear nota">
+                <svg
+                  class="note-action-icon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path
+                    d="M9 4h6"
+                  />
+                  <path
+                    d="M10 4v4l-3 3v1h10v-1l-3-3V4"
+                  />
+                  <path
+                    d="M12 12v8"
+                  />
+                </svg>
+              </button>
+              <button type="button" class="note-delete" data-action="delete-note" aria-label="Borrar nota" title="Borrar nota">
+                <svg class="note-action-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M6.7 5.3 12 10.6l5.3-5.3 1.4 1.4L13.4 12l5.3 5.3-1.4 1.4L12 13.4l-5.3 5.3-1.4-1.4L10.6 12 5.3 6.7z"
+                  />
+                </svg>
+              </button>
+            </div>
+          </legend>
+          <div class="blocks"></div>
+        </fieldset>
+        <div class="note-footer">
+          <div class="note-stamp" aria-label="Última edición"></div>
+        </div>
+      </section>
+    </template>
+
+    <template id="feed-action-template">
+      <div class="feed-action">
+        <button type="button" data-action="insert-note">+ nota</button>
+      </div>
+    </template>
+
+    <template id="block-template">
+      <div class="block">
+        <div class="block-row">
+          <label class="toggle">
+            <input type="checkbox" />
+          </label>
+          <textarea class="block-text" rows="1" spellcheck="true" autocapitalize="sentences"></textarea>
+          <div class="adjust">
+            <button type="button" data-action="outdent" aria-label="Sacar nivel">←</button>
+            <button type="button" data-action="indent" aria-label="Indentar">→</button>
+          </div>
+        </div>
+        <div class="block-actions">
+          <button type="button" data-action="add-check">+ item</button>
+        </div>
+        <div class="children"></div>
+      </div>
+    </template>
+
+    <script>
+      const notesEl = document.querySelector("#notes");
+      const noteTemplate = document.querySelector("#note-template");
+      const blockTemplate = document.querySelector("#block-template");
+      const feedActionTemplate = document.querySelector("#feed-action-template");
+      const titleMeasureCanvas = document.createElement("canvas");
+      const titleMeasureContext = titleMeasureCanvas.getContext("2d");
+
+      let nextNoteId = 1;
+      let nextBlockId = 1;
+      let selectedNoteId = null;
+      let selectedBlockId = null;
+      const defaultEditorName = "Marcos";
+      const argentinaDateTime = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "America/Argentina/Cordoba",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false
+      });
+      const titleHints = [
+        ":)",
+        ":(",
+        ":D",
+        ":P",
+        ";)",
+        ";P",
+        ":/",
+        ":|",
+        ":$",
+        ":*",
+        ":o",
+        ":'(",
+        "B)",
+        "8)",
+        "xD",
+        "._.",
+        "-.-",
+        "^_^",
+        "o_o",
+        "u_u",
+        "T_T",
+        ">_<",
+        "<3",
+        "</3",
+        ":]",
+        ":[",
+        ":3",
+        ":>",
+        ":<",
+        "._)"
+      ];
+      const emptyBodyHints = ["hola?"];
+      const noteHintSources = {
+        title: {
+          next(noteList) {
+            const usedHints = new Set(noteList.map((note) => note.titleHint).filter(Boolean));
+
+            for (let attempt = 0; attempt < 12; attempt += 1) {
+              const first = titleHints[randomIndex(titleHints.length)];
+              const second = titleHints[randomIndex(titleHints.length)];
+              const hint = first === second ? first : `${first} ${second}`;
+              if (!usedHints.has(hint)) return hint;
+            }
+
+            return `${titleHints[randomIndex(titleHints.length)]} ${titleHints[randomIndex(titleHints.length)]}`;
+          }
+        },
+        body: {
+          next() {
+            return emptyBodyHints[randomIndex(emptyBodyHints.length)];
+          }
+        }
+      };
+
+      let notes = [];
+
+      notes = [createNote()];
+
+      function createNote(title = "", blocks = [createBlock("text")]) {
+        return {
+          id: nextNoteId++,
+          title,
+          blocks,
+          titleHint: getNextNoteHint("title"),
+          bodyHint: getNextNoteHint("body"),
+          pinned: false,
+          updatedBy: defaultEditorName,
+          updatedAt: new Date().toISOString()
+        };
+      }
+
+      function createBlock(type = "text", text = "", done = false, children = []) {
+        return { id: nextBlockId++, type, text, done, children };
+      }
+
+      function autoSize(textarea) {
+        if (textarea.classList.contains("note-title")) {
+          const fieldset = textarea.closest("fieldset");
+          const computed = getComputedStyle(textarea);
+          const source = textarea.value || textarea.placeholder || "";
+          const longestLine = source.split("\n").reduce((longest, line) => {
+            return line.length > longest.length ? line : longest;
+          }, " ");
+          const maxWidth = Math.max(16, Math.floor((fieldset?.clientWidth || 0) / 2));
+
+          if (titleMeasureContext) {
+            titleMeasureContext.font = computed.font;
+            const measured = Math.ceil(titleMeasureContext.measureText(longestLine).width) + 12;
+            textarea.style.width = `${Math.min(Math.max(16, measured), maxWidth)}px`;
+            textarea.style.maxWidth = `${maxWidth}px`;
+          }
+        }
+
+        textarea.style.height = "0px";
+        textarea.style.height = Math.max(textarea.scrollHeight, 38) + "px";
+      }
+
+      function formatNoteStamp(note) {
+        const parts = Object.fromEntries(
+          argentinaDateTime.formatToParts(new Date(note.updatedAt)).map((part) => [part.type, part.value])
+        );
+        return `${note.updatedBy} - ${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
+      }
+
+      function randomIndex(length) {
+        if (window.crypto?.getRandomValues) {
+          const values = new Uint32Array(1);
+          window.crypto.getRandomValues(values);
+          return values[0] % length;
+        }
+
+        return Math.floor(Math.random() * length);
+      }
+
+      function getNextNoteHint(kind) {
+        const source = noteHintSources[kind];
+        if (!source?.next) return "";
+        return source.next(notes);
+      }
+
+      function findNote(noteId) {
+        const index = notes.findIndex((note) => note.id === noteId);
+        if (index === -1) return null;
+        return { note: notes[index], index, list: notes };
+      }
+
+      function getUnpinnedInsertIndex() {
+        for (let index = 0; index < notes.length; index += 1) {
+          if (!notes[index].pinned) return index;
+        }
+
+        return notes.length;
+      }
+
+      function stampNote(note) {
+        note.updatedAt = new Date().toISOString();
+        note.updatedBy = defaultEditorName;
+      }
+
+      function getFirstUnpinnedIndex() {
+        return getUnpinnedInsertIndex();
+      }
+
+      function findBlock(noteId, blockId, list = findNote(noteId)?.note.blocks, parentBlock = null) {
+        if (!list) return null;
+
+        for (let index = 0; index < list.length; index += 1) {
+          const block = list[index];
+          if (block.id === blockId) {
+            return { block, index, list, parentBlock };
+          }
+
+          const found = findBlock(noteId, blockId, block.children, block);
+          if (found) return found;
+        }
+
+        return null;
+      }
+
+      function canIndent(noteId, blockId) {
+        const found = findBlock(noteId, blockId);
+        if (!found || found.block.type !== "check" || found.index === 0) return false;
+        return found.list[found.index - 1].type === "check";
+      }
+
+      function flattenBlockIds(list, output = []) {
+        for (const block of list) {
+          output.push(block.id);
+          flattenBlockIds(block.children, output);
+        }
+
+        return output;
+      }
+
+      function getBlockOrder(noteId) {
+        const note = findNote(noteId);
+        return note ? flattenBlockIds(note.note.blocks, []) : [];
+      }
+
+      function touchNote(noteId) {
+        const note = findNote(noteId);
+        if (!note) return;
+        stampNote(note.note);
+      }
+
+      function getLineInfo(value, position) {
+        const lines = value.split("\n");
+        let remaining = position;
+
+        for (let index = 0; index < lines.length; index += 1) {
+          const lineLength = lines[index].length;
+          if (remaining <= lineLength) {
+            return { lines, lineIndex: index, column: remaining };
+          }
+
+          remaining -= lineLength + 1;
+        }
+
+        const lastIndex = lines.length - 1;
+        return { lines, lineIndex: lastIndex, column: lines[lastIndex].length };
+      }
+
+      function getCaretPositionForLine(value, lineIndex, column) {
+        const lines = value.split("\n");
+        const clampedLine = Math.max(0, Math.min(lineIndex, lines.length - 1));
+        let position = 0;
+
+        for (let index = 0; index < clampedLine; index += 1) {
+          position += lines[index].length + 1;
+        }
+
+        return position + Math.min(column, lines[clampedLine].length);
+      }
+
+      function focusTextarea(textarea, position = null) {
+        if (!textarea) return;
+
+        textarea.focus();
+
+        if (position !== null) {
+          textarea.setSelectionRange(position, position);
+        }
+
+        autoSize(textarea);
+      }
+
+      function syncSelection() {
+        document.querySelectorAll(".note-wrap[data-note-id]").forEach((noteEl) => {
+          noteEl.dataset.selected = String(Number(noteEl.dataset.noteId) === selectedNoteId);
+        });
+
+        document.querySelectorAll(".block[data-block-id]").forEach((blockEl) => {
+          blockEl.dataset.selected = String(Number(blockEl.dataset.blockId) === selectedBlockId);
+        });
+      }
+
+      function renderBlocks(noteId, blocks, target, depth = 0, emptyPlaceholderBlockId = null, emptyPlaceholderText = "") {
+        target.textContent = "";
+
+        for (const block of blocks) {
+          const fragment = blockTemplate.content.cloneNode(true);
+          const blockEl = fragment.querySelector(".block");
+          const row = fragment.querySelector(".block-row");
+          const checkbox = fragment.querySelector('input[type="checkbox"]');
+          const textarea = fragment.querySelector(".block-text");
+          const adjust = fragment.querySelector(".adjust");
+          const childrenEl = fragment.querySelector(".children");
+          const addCheckButton = fragment.querySelector('[data-action="add-check"]');
+          const indentButton = fragment.querySelector('[data-action="indent"]');
+          const outdentButton = fragment.querySelector('[data-action="outdent"]');
+
+          blockEl.dataset.noteId = noteId;
+          blockEl.dataset.blockId = block.id;
+          blockEl.dataset.type = block.type;
+          blockEl.dataset.done = block.done;
+          blockEl.dataset.selected = String(block.id === selectedBlockId);
+
+          textarea.value = block.text;
+          textarea.placeholder = block.id === emptyPlaceholderBlockId && block.type === "text" ? emptyPlaceholderText : "";
+
+          if (block.type === "text") {
+            row.querySelector(".toggle").remove();
+            addCheckButton.hidden = false;
+            addCheckButton.textContent = "+ checklist";
+            indentButton.hidden = true;
+            outdentButton.hidden = true;
+            childrenEl.remove();
+          } else {
+            checkbox.checked = block.done;
+            addCheckButton.hidden = false;
+            addCheckButton.textContent = "+ item";
+            indentButton.hidden = !canIndent(noteId, block.id);
+            outdentButton.hidden = depth === 0;
+            renderBlocks(noteId, block.children, childrenEl, depth + 1, emptyPlaceholderBlockId, emptyPlaceholderText);
+          }
+
+          target.append(fragment);
+        }
+      }
+
+      function render() {
+        if (!notes.length) notes = [createNote()];
+
+        if (selectedNoteId === null || !findNote(selectedNoteId)) {
+          selectedNoteId = notes[0].id;
+        }
+
+        notesEl.textContent = "";
+
+        const firstUnpinnedIndex = getFirstUnpinnedIndex();
+
+        function appendTopAction() {
+          const topAction = feedActionTemplate.content.cloneNode(true);
+          const topWrap = topAction.querySelector(".feed-action");
+          const topButton = topAction.querySelector("button");
+          topWrap.dataset.variant = "top";
+          topWrap.dataset.insertIndex = String(firstUnpinnedIndex);
+          topButton.textContent = "+ nota nueva";
+          notesEl.append(topAction);
+        }
+
+        if (firstUnpinnedIndex === 0) {
+          appendTopAction();
+        }
+
+        for (const [index, note] of notes.entries()) {
+          const fragment = noteTemplate.content.cloneNode(true);
+          const wrap = fragment.querySelector(".note-wrap");
+          const title = fragment.querySelector(".note-title");
+          const blocksEl = fragment.querySelector(".blocks");
+          const footerStamp = fragment.querySelector(".note-stamp");
+          const pinButton = fragment.querySelector('[data-action="toggle-pin"]');
+
+          wrap.dataset.noteId = note.id;
+          wrap.dataset.selected = String(note.id === selectedNoteId);
+          wrap.dataset.pinned = String(note.pinned);
+          title.value = note.title;
+          title.placeholder = note.titleHint;
+          footerStamp.textContent = formatNoteStamp(note);
+          pinButton.setAttribute("aria-pressed", String(note.pinned));
+          pinButton.setAttribute("aria-label", note.pinned ? "Despinear nota" : "Pinear nota");
+          pinButton.setAttribute("title", note.pinned ? "Despinear nota" : "Pinear nota");
+
+          const emptyPlaceholderBlockId = noteHasBodyContent(note.blocks) ? null : note.blocks[0]?.id ?? null;
+          renderBlocks(note.id, note.blocks, blocksEl, 0, emptyPlaceholderBlockId, note.bodyHint);
+          notesEl.append(fragment);
+
+          if (index + 1 === firstUnpinnedIndex) {
+            appendTopAction();
+          }
+        }
+
+        document.querySelectorAll("textarea").forEach(autoSize);
+        syncSelection();
+      }
+
+      function focusTitle(noteId) {
+        requestAnimationFrame(() => {
+          const textarea = document.querySelector(`.note-wrap[data-note-id="${noteId}"] .note-title`);
+          if (!textarea) return;
+          focusTextarea(textarea, textarea.value.length);
+        });
+      }
+
+      function focusTitleAt(noteId, position) {
+        requestAnimationFrame(() => {
+          const textarea = document.querySelector(`.note-wrap[data-note-id="${noteId}"] .note-title`);
+          focusTextarea(textarea, position);
+        });
+      }
+
+      function focusBlock(noteId, blockId, caretAtEnd = true) {
+        requestAnimationFrame(() => {
+          const textarea = document.querySelector(
+            `.block[data-note-id="${noteId}"][data-block-id="${blockId}"] .block-text`
+          );
+          if (!textarea) return;
+          focusTextarea(textarea, caretAtEnd ? textarea.value.length : null);
+        });
+      }
+
+      function focusBlockAt(noteId, blockId, position) {
+        requestAnimationFrame(() => {
+          const textarea = document.querySelector(
+            `.block[data-note-id="${noteId}"][data-block-id="${blockId}"] .block-text`
+          );
+          focusTextarea(textarea, position);
+        });
+      }
+
+      function ensureNoteHasBlock(note) {
+        if (!note.blocks.length) note.blocks.push(createBlock("text"));
+      }
+
+      function noteHasBodyContent(blocks) {
+        for (const block of blocks) {
+          if (block.type === "check") return true;
+          if (block.text.trim() !== "") return true;
+          if (noteHasBodyContent(block.children)) return true;
+        }
+
+        return false;
+      }
+
+      function insertBlockBelow(noteId, blockId, type, text = "") {
+        const found = findBlock(noteId, blockId);
+        if (!found) return null;
+
+        const newBlock = createBlock(type, text);
+        found.list.splice(found.index + 1, 0, newBlock);
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = newBlock.id;
+        render();
+        return newBlock.id;
+      }
+
+      function turnIntoCheck(noteId, blockId) {
+        const found = findBlock(noteId, blockId);
+        if (!found || found.block.type !== "text") return;
+
+        found.block.type = "check";
+        found.block.done = false;
+        found.block.children = [];
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = blockId;
+        render();
+        focusBlock(noteId, blockId);
+      }
+
+      function addCheckFromCurrentLine(noteId, blockId) {
+        const found = findBlock(noteId, blockId);
+        if (!found) return;
+
+        if (found.block.type === "text" && found.block.text.trim() === "") {
+          turnIntoCheck(noteId, blockId);
+          return;
+        }
+
+        focusBlock(noteId, insertBlockBelow(noteId, blockId, "check"));
+      }
+
+      function splitTextBlockOnDoubleEnter(noteId, blockId, textarea) {
+        const caret = textarea.selectionStart;
+        const value = textarea.value;
+        const splitIndex = value.lastIndexOf("\n\n", Math.max(0, caret - 1));
+
+        if (splitIndex === -1) return false;
+
+        const found = findBlock(noteId, blockId);
+        if (!found || found.block.type !== "text") return false;
+
+        const before = value.slice(0, splitIndex);
+        const after = value.slice(splitIndex + 2);
+
+        found.block.text = before;
+        touchNote(noteId);
+        focusBlock(noteId, insertBlockBelow(noteId, blockId, "text", after), false);
+        return true;
+      }
+
+      function indentBlock(noteId, blockId, caretPosition = null) {
+        const found = findBlock(noteId, blockId);
+        if (!found || !canIndent(noteId, blockId)) return;
+
+        const previous = found.list[found.index - 1];
+        const [block] = found.list.splice(found.index, 1);
+        previous.children.push(block);
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = block.id;
+        render();
+        if (caretPosition === null) {
+          focusBlock(noteId, block.id);
+          return;
+        }
+
+        focusBlockAt(noteId, block.id, caretPosition);
+      }
+
+      function outdentBlock(noteId, blockId, caretPosition = null) {
+        const found = findBlock(noteId, blockId);
+        if (!found || !found.parentBlock) return;
+
+        const [block] = found.list.splice(found.index, 1);
+        const parent = findBlock(noteId, found.parentBlock.id);
+        parent.list.splice(parent.index + 1, 0, block);
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = block.id;
+        render();
+        if (caretPosition === null) {
+          focusBlock(noteId, block.id);
+          return;
+        }
+
+        focusBlockAt(noteId, block.id, caretPosition);
+      }
+
+      function exitChecklist(noteId, blockId) {
+        const found = findBlock(noteId, blockId);
+        if (!found || found.block.type !== "check") return;
+
+        if (found.parentBlock) {
+          const [block] = found.list.splice(found.index, 1);
+          const parent = findBlock(noteId, found.parentBlock.id);
+          if (!parent) return;
+          parent.list.splice(parent.index + 1, 0, block);
+          touchNote(noteId);
+          selectedNoteId = noteId;
+          selectedBlockId = block.id;
+          render();
+          focusBlock(noteId, block.id, false);
+          return;
+        }
+
+        found.block.type = "text";
+        found.block.done = false;
+        if (found.block.children.length) {
+          found.list.splice(found.index + 1, 0, ...found.block.children);
+          found.block.children = [];
+        }
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = found.block.id;
+        render();
+        focusBlock(noteId, found.block.id, false);
+      }
+
+      function moveVertical(noteId, blockId, direction, textarea) {
+        if (textarea.selectionStart !== textarea.selectionEnd) return false;
+
+        const lineInfo = getLineInfo(textarea.value, textarea.selectionStart);
+
+        if (direction === "up" && lineInfo.lineIndex !== 0) return false;
+        if (direction === "down" && lineInfo.lineIndex !== lineInfo.lines.length - 1) return false;
+
+        const orderedIds = getBlockOrder(noteId);
+        const currentIndex = orderedIds.indexOf(blockId);
+        const targetId = orderedIds[currentIndex + (direction === "up" ? -1 : 1)];
+
+        if (!targetId && direction === "up" && currentIndex === 0) {
+          const note = findNote(noteId);
+          if (!note) return false;
+
+          const titlePosition = getCaretPositionForLine(note.note.title, note.note.title.split("\n").length - 1, lineInfo.column);
+          selectedNoteId = noteId;
+          selectedBlockId = null;
+          render();
+          focusTitleAt(noteId, titlePosition);
+          return true;
+        }
+
+        if (!targetId) return false;
+
+        const target = findBlock(noteId, targetId);
+        if (!target) return false;
+
+        const targetLines = target.block.text.split("\n");
+        const targetLineIndex = direction === "up" ? targetLines.length - 1 : 0;
+        const targetPosition = getCaretPositionForLine(target.block.text, targetLineIndex, lineInfo.column);
+
+        selectedNoteId = noteId;
+        selectedBlockId = targetId;
+        render();
+        focusBlockAt(noteId, targetId, targetPosition);
+        return true;
+      }
+
+      function deleteBlock(noteId, blockId) {
+        const noteRef = findNote(noteId);
+        const found = findBlock(noteId, blockId);
+        if (!noteRef || !found) return;
+
+        const orderedIds = flattenBlockIds(noteRef.note.blocks);
+        const currentIndex = orderedIds.indexOf(blockId);
+        const previousId = currentIndex > 0 ? orderedIds[currentIndex - 1] : null;
+        const nextId = currentIndex >= 0 ? orderedIds[currentIndex + 1] ?? null : null;
+
+        if (found.list === noteRef.note.blocks && found.list.length === 1 && found.block.type === "text") {
+          found.block.text = "";
+          touchNote(noteId);
+          selectedNoteId = noteId;
+          selectedBlockId = found.block.id;
+          render();
+          focusBlock(noteId, found.block.id);
+          return;
+        }
+
+        found.list.splice(found.index, 1);
+        ensureNoteHasBlock(noteRef.note);
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = previousId ?? nextId ?? noteRef.note.blocks[0].id;
+        render();
+        focusBlock(noteId, selectedBlockId);
+      }
+
+      function insertNoteAt(insertIndex) {
+        const newNote = createNote();
+        notes.splice(insertIndex, 0, newNote);
+        selectedNoteId = newNote.id;
+        selectedBlockId = newNote.blocks[0].id;
+        render();
+        focusBlock(newNote.id, newNote.blocks[0].id, false);
+      }
+
+      function addTopNote() {
+        insertNoteAt(getFirstUnpinnedIndex());
+      }
+
+      function togglePin(noteId) {
+        const found = findNote(noteId);
+        if (!found) return;
+
+        const actionLabel = found.note.pinned ? "Despinear" : "Pinear";
+        if (!window.confirm(`${actionLabel} esta nota?`)) return;
+
+        const [note] = found.list.splice(found.index, 1);
+
+        note.pinned = !note.pinned;
+        stampNote(note);
+
+        if (note.pinned) {
+          notes.unshift(note);
+        } else {
+          notes.splice(getFirstUnpinnedIndex(), 0, note);
+        }
+
+        selectedNoteId = note.id;
+        render();
+      }
+
+      function deleteNote(noteId) {
+        const found = findNote(noteId);
+        if (!found) return;
+
+        if (!window.confirm("Borrar esta nota?")) return;
+
+        found.list.splice(found.index, 1);
+
+        if (!notes.length) {
+          const newNote = createNote();
+          notes.push(newNote);
+          selectedNoteId = newNote.id;
+          selectedBlockId = newNote.blocks[0].id;
+          render();
+          focusBlock(newNote.id, newNote.blocks[0].id, false);
+          return;
+        }
+
+        const fallbackNote = notes[Math.min(found.index, notes.length - 1)];
+        selectedNoteId = fallbackNote.id;
+        selectedBlockId = fallbackNote.blocks[0]?.id ?? null;
+        render();
+        if (selectedBlockId !== null) {
+          focusBlock(fallbackNote.id, selectedBlockId, false);
+        }
+      }
+
+      notesEl.addEventListener("focusin", (event) => {
+        const noteWrap = event.target.closest(".note-wrap");
+        if (!noteWrap) return;
+
+        selectedNoteId = Number(noteWrap.dataset.noteId);
+
+        const blockEl = event.target.closest(".block");
+        selectedBlockId = blockEl ? Number(blockEl.dataset.blockId) : null;
+
+        syncSelection();
+      });
+
+      notesEl.addEventListener("click", (event) => {
+        const noteWrap = event.target.closest(".note-wrap");
+        if (!noteWrap) return;
+
+        selectedNoteId = Number(noteWrap.dataset.noteId);
+
+        const blockEl = event.target.closest(".block");
+        selectedBlockId = blockEl ? Number(blockEl.dataset.blockId) : selectedBlockId;
+
+        syncSelection();
+      });
+
+      notesEl.addEventListener("input", (event) => {
+        const textarea = event.target.closest("textarea");
+        if (!textarea) return;
+
+        const noteWrap = textarea.closest(".note-wrap");
+        const noteId = Number(noteWrap.dataset.noteId);
+
+        if (textarea.classList.contains("note-title")) {
+          const note = findNote(noteId);
+          if (!note) return;
+          note.note.title = textarea.value;
+          touchNote(noteId);
+          selectedNoteId = noteId;
+          selectedBlockId = null;
+          autoSize(textarea);
+          syncSelection();
+          return;
+        }
+
+        const blockEl = textarea.closest(".block");
+        const blockId = Number(blockEl.dataset.blockId);
+        const found = findBlock(noteId, blockId);
+        if (!found) return;
+
+        found.block.text = textarea.value;
+        touchNote(noteId);
+        selectedNoteId = noteId;
+        selectedBlockId = blockId;
+
+        if (found.block.type === "text" && splitTextBlockOnDoubleEnter(noteId, blockId, textarea)) return;
+
+        autoSize(textarea);
+        syncSelection();
+      });
+
+      notesEl.addEventListener("change", (event) => {
+        const checkbox = event.target.closest('input[type="checkbox"]');
+        if (!checkbox) return;
+
+        const blockEl = checkbox.closest(".block");
+        const noteId = Number(blockEl.dataset.noteId);
+        const blockId = Number(blockEl.dataset.blockId);
+        const found = findBlock(noteId, blockId);
+        if (!found) return;
+
+        found.block.done = checkbox.checked;
+        touchNote(noteId);
+        blockEl.dataset.done = String(checkbox.checked);
+        selectedNoteId = noteId;
+        selectedBlockId = blockId;
+        syncSelection();
+      });
+
+      notesEl.addEventListener("keydown", (event) => {
+        const title = event.target.closest(".note-title");
+        if (title && event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          const noteId = Number(title.closest(".note-wrap").dataset.noteId);
+          const note = findNote(noteId);
+          if (!note) return;
+          ensureNoteHasBlock(note.note);
+          selectedNoteId = noteId;
+          selectedBlockId = note.note.blocks[0].id;
+          render();
+          focusBlock(noteId, note.note.blocks[0].id, false);
+          return;
+        }
+
+        if (title && (event.key === "ArrowDown" || event.key === "ArrowUp")) {
+          const noteId = Number(title.closest(".note-wrap").dataset.noteId);
+          const note = findNote(noteId);
+          if (!note) return;
+
+          const lineInfo = getLineInfo(title.value, title.selectionStart);
+          const isMovingDown = event.key === "ArrowDown";
+          const onEdge = isMovingDown
+            ? lineInfo.lineIndex === lineInfo.lines.length - 1
+            : lineInfo.lineIndex === 0;
+
+          if (!onEdge || !note.note.blocks.length) return;
+
+          const targetId = isMovingDown ? note.note.blocks[0].id : null;
+          if (!targetId) return;
+
+          event.preventDefault();
+          selectedNoteId = noteId;
+          selectedBlockId = targetId;
+          render();
+          focusBlockAt(noteId, targetId, getCaretPositionForLine(note.note.blocks[0].text, 0, lineInfo.column));
+          return;
+        }
+
+        const textarea = event.target.closest(".block-text");
+        if (!textarea) return;
+
+        const blockEl = textarea.closest(".block");
+        const noteId = Number(blockEl.dataset.noteId);
+        const blockId = Number(blockEl.dataset.blockId);
+        const found = findBlock(noteId, blockId);
+        if (!found) return;
+
+        if ((event.key === "ArrowUp" || event.key === "ArrowDown") && moveVertical(noteId, blockId, event.key === "ArrowUp" ? "up" : "down", textarea)) {
+          event.preventDefault();
+          return;
+        }
+
+        if (event.key === "Tab" && found.block.type === "check") {
+          event.preventDefault();
+
+          if (event.shiftKey) {
+            outdentBlock(noteId, blockId, textarea.selectionStart);
+            return;
+          }
+
+          indentBlock(noteId, blockId, textarea.selectionStart);
+          return;
+        }
+
+        if (event.key === "Enter" && !event.shiftKey && found.block.type === "check") {
+          event.preventDefault();
+
+          if (textarea.value.trim() === "") {
+            exitChecklist(noteId, blockId);
+            return;
+          }
+
+          focusBlock(noteId, insertBlockBelow(noteId, blockId, "check"), false);
+          return;
+        }
+
+        if (event.key === "Backspace" && textarea.value === "") {
+          event.preventDefault();
+          deleteBlock(noteId, blockId);
+        }
+      });
+
+      notesEl.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-action]");
+        if (!button) return;
+
+        const feedAction = button.closest(".feed-action");
+        if (button.dataset.action === "insert-note" && feedAction) {
+          addTopNote();
+          return;
+        }
+
+        const noteWrap = button.closest(".note-wrap");
+        if (!noteWrap) return;
+
+        const noteId = Number(noteWrap.dataset.noteId);
+        const blockEl = button.closest(".block");
+
+        if (button.dataset.action === "toggle-pin") {
+          togglePin(noteId);
+          return;
+        }
+
+        if (button.dataset.action === "delete-note") {
+          deleteNote(noteId);
+          return;
+        }
+
+        if (!blockEl) return;
+
+        const blockId = Number(blockEl.dataset.blockId);
+        selectedNoteId = noteId;
+        selectedBlockId = blockId;
+
+        if (button.dataset.action === "add-check") {
+          addCheckFromCurrentLine(noteId, blockId);
+          return;
+        }
+
+        if (button.dataset.action === "indent") {
+          indentBlock(noteId, blockId);
+          return;
+        }
+
+        if (button.dataset.action === "outdent") {
+          outdentBlock(noteId, blockId);
+          return;
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        document.querySelectorAll("textarea").forEach(autoSize);
+      });
+
+      selectedNoteId = notes[0].id;
+      selectedBlockId = notes[0].blocks[0].id;
+      render();
+    </script>
+  </body>
+</html>
