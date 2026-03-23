@@ -84,19 +84,37 @@ test("scaffold inicial y nota nueva arriba", async ({ page }) => {
 
 test("placeholders sutiles y una sola accion global de nueva nota", async ({ page }) => {
   const firstNote = getNote(page, 0);
+  const feedBar = page.getByTestId("feed-bar");
 
   await expect(firstNote.getByTestId("note-title")).toHaveAttribute("placeholder", /.+/);
   await expect(getBlock(firstNote, 0)).toHaveAttribute("placeholder", "hola?");
+  await expect(feedBar).toBeVisible();
+  await expect(firstNote.getByTestId("toggle-pin")).toBeVisible();
+  await expect(firstNote.getByTestId("toggle-pin")).toHaveText("pinear");
+  await expect(firstNote.getByTestId("delete-note")).toBeVisible();
+  await expect(firstNote.getByTestId("note-footer-actions")).toBeVisible();
   await expect(page.getByTestId("insert-note")).toHaveCount(1);
-  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota nueva");
+  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota");
+
+  const placement = await feedBar.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      position: window.getComputedStyle(element).position,
+      bottomOffset: window.innerHeight - rect.bottom
+    };
+  });
+  expect(placement.position).toBe("fixed");
+  expect(Math.abs(placement.bottomOffset)).toBeLessThan(2);
 
   const pinnedNote = await addNote(page, "nota fija");
   await acceptNextDialog(page);
   await pinnedNote.getByTestId("toggle-pin").click();
   await addNote(page, "nota libre");
 
+  await expect(getNote(page, 0).getByTestId("note-footer-actions")).toBeHidden();
+  await expect(getNote(page, 1).getByTestId("note-footer-actions")).toBeVisible();
   await expect(page.getByTestId("insert-note")).toHaveCount(1);
-  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota nueva");
+  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota");
 });
 
 test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => {
@@ -116,8 +134,10 @@ test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => 
     { text: "nota base", pinned: false }
   ]);
 
+  await expect(getNote(page, 0).getByTestId("toggle-pin")).toHaveText("despinear");
   await expect(getNote(page, 0).getByTestId("delete-note")).toBeHidden();
   await expect(getNote(page, 1).getByTestId("delete-note")).toBeVisible();
+  await expect(getNote(page, 2).getByTestId("delete-note")).toBeHidden();
 
   await dismissNextDialog(page);
   await getNote(page, 1).getByTestId("delete-note").click();
@@ -147,6 +167,7 @@ test("cancelar pin no cambia orden y despinear devuelve al inicio de no pineadas
   await getNote(page, 0).getByTestId("toggle-pin").click();
   await addNote(page, "otra");
   await acceptNextDialog(page);
+  await getBlock(getNote(page, 0), 0).click();
   await getNote(page, 0).getByTestId("toggle-pin").click();
 
   state = await snapshot(page);
