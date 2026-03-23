@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>magic_engine_lab</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="kicker">simple_html_research / experimento</p>
+        <h1>magic engine lab</h1>
+        <p class="lede">
+          Sandbox estático para iterar spells, prompts, outputs y logs sin ensuciar la
+          migración de <code>losdoschinos</code>.
+        </p>
+      </header>
+
+      <section class="panel panel-key" aria-labelledby="key-title">
+        <div class="panel-head">
+          <h2 id="key-title">Portal</h2>
+          <p>OpenRouter vive afuera; la key queda sólo en tu navegador.</p>
+        </div>
+        <div class="portal-row">
+          <label class="field">
+            <span>OpenRouter API key</span>
+            <input
+              id="api-key"
+              data-testid="api-key"
+              type="password"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="sk-or-v1-..."
+            />
+          </label>
+          <div class="button-row">
+            <button type="button" id="save-key" data-testid="save-key">guardar key</button>
+            <button type="button" id="clear-key" class="ghost" data-testid="clear-key">
+              limpiar
+            </button>
+            <button type="button" id="refresh-models" class="ghost" data-testid="refresh-models">
+              modelos free
+            </button>
+          </div>
+        </div>
+        <p class="hint" id="portal-status" data-testid="portal-status">
+          sin key guardada
+        </p>
+      </section>
+
+      <div class="grid">
+        <section class="panel" aria-labelledby="spell-title">
+          <div class="panel-head">
+            <h2 id="spell-title">Spell Runner</h2>
+            <p>Hoy el spell activo es <code>spark/ascii-note-title</code>.</p>
+          </div>
+
+          <div class="spell-card" data-testid="spell-card">
+            <div class="spell-meta">
+              <span class="pill">stable</span>
+              <span class="pill">ascii</span>
+              <span class="pill">1 line</span>
+            </div>
+
+            <label class="field">
+              <span>Títulos existentes</span>
+              <textarea
+                id="existing-titles"
+                data-testid="existing-titles"
+                rows="5"
+                placeholder="uno por línea"
+              ></textarea>
+            </label>
+
+            <div class="split">
+              <label class="field">
+                <span>Índice de nota</span>
+                <input
+                  id="note-count"
+                  data-testid="note-count"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="0"
+                />
+              </label>
+
+              <label class="field">
+                <span>Seed opcional</span>
+                <input
+                  id="seed"
+                  data-testid="seed"
+                  type="text"
+                  autocomplete="off"
+                  spellcheck="false"
+                  placeholder="demo-seed"
+                />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button type="button" id="cast-spell" data-testid="cast-spell">cast title</button>
+              <button type="button" id="clear-results" class="ghost" data-testid="clear-results">
+                limpiar resultados
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="result-title">
+          <div class="panel-head">
+            <h2 id="result-title">Último Cast</h2>
+            <p>Salida limpia, metadata y estado del provider.</p>
+          </div>
+          <div class="result-card" data-testid="result-card">
+            <p class="empty-state" id="result-empty">todavía no corriste nada</p>
+            <div id="result-body" hidden>
+              <p class="result-output" id="result-output"></p>
+              <dl class="result-meta">
+                <div>
+                  <dt>modelo</dt>
+                  <dd id="result-model">-</dd>
+                </div>
+                <div>
+                  <dt>tokens</dt>
+                  <dd id="result-tokens">-</dd>
+                </div>
+                <div>
+                  <dt>estado</dt>
+                  <dd id="result-status">-</dd>
+                </div>
+              </dl>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <div class="grid">
+        <section class="panel" aria-labelledby="models-title">
+          <div class="panel-head">
+            <h2 id="models-title">Modelos Free Visibles</h2>
+            <p>Discovery en vivo desde OpenRouter, sin lista dura en el código.</p>
+          </div>
+          <ul class="model-list" id="model-list" data-testid="model-list">
+            <li class="empty-state">sin cargar</li>
+          </ul>
+        </section>
+
+        <section class="panel" aria-labelledby="research-title">
+          <div class="panel-head">
+            <h2 id="research-title">Research Movido</h2>
+            <p>Todo el track documental del magic engine vive junto al sandbox.</p>
+          </div>
+          <ul class="research-list" data-testid="research-list">
+            <li><a href="./research/README.md">research index</a></li>
+            <li><a href="./research/magic-engine-foundations.md">foundations</a></li>
+            <li><a href="./research/openrouter-free-landscape.md">openrouter free landscape</a></li>
+            <li><a href="./research/creative-patterns-landscape.md">creative patterns landscape</a></li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="log-title">
+        <div class="panel-head">
+          <h2 id="log-title">Cast Log</h2>
+          <p>Eventos persistidos localmente para debug. Exportables en JSONL.</p>
+        </div>
+        <div class="button-row">
+          <button type="button" id="export-log" class="ghost" data-testid="export-log">
+            exportar jsonl
+          </button>
+          <button type="button" id="clear-log" class="ghost" data-testid="clear-log">
+            vaciar log
+          </button>
+        </div>
+        <pre class="log-view" id="log-view" data-testid="log-view">[]</pre>
+      </section>
+    </main>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>

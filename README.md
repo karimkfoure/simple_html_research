@@ -17,6 +17,19 @@ Repo de experimentos HTML estáticos, simples y deployables.
   - Helpers genéricos: [perfect_notes/js/helpers.js](./perfect_notes/js/helpers.js)
   - Spec local: [perfect_notes/AGENTS.md](./perfect_notes/AGENTS.md)
   - Tests locales: [perfect_notes/tests/perfect_notes.spec.js](./perfect_notes/tests/perfect_notes.spec.js)
+- `magic_engine`: [karimkfoure.github.io/simple_html_research/magic_engine/](https://karimkfoure.github.io/simple_html_research/magic_engine/)
+  - Sandbox estático para iterar `spells`, OpenRouter, logs y research del magic engine fuera de `losdoschinos`.
+  - Shell HTML: [magic_engine/index.html](./magic_engine/index.html)
+  - Estilos: [magic_engine/styles.css](./magic_engine/styles.css)
+  - Bootstrap: [magic_engine/js/main.js](./magic_engine/js/main.js)
+  - App/UI: [magic_engine/js/app.js](./magic_engine/js/app.js)
+  - Log store: [magic_engine/js/log-store.js](./magic_engine/js/log-store.js)
+  - Core del engine: [magic_engine/js/engine/core.js](./magic_engine/js/engine/core.js)
+  - Spellbook: [magic_engine/js/engine/spellbook.js](./magic_engine/js/engine/spellbook.js)
+  - Portal OpenRouter: [magic_engine/js/engine/openrouter-portal.js](./magic_engine/js/engine/openrouter-portal.js)
+  - Research movido: [magic_engine/research/README.md](./magic_engine/research/README.md)
+  - Spec local: [magic_engine/AGENTS.md](./magic_engine/AGENTS.md)
+  - Tests locales: [magic_engine/tests/magic_engine.spec.js](./magic_engine/tests/magic_engine.spec.js)
 
 ## Deploy
 
