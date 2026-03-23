@@ -176,13 +176,18 @@ input[type="checkbox"] {
   text-overflow: ellipsis;
 }
 
-.note-wrap[data-pinned="true"] fieldset {
-  border-width: 3px;
+.note-wrap[data-selected="true"] fieldset {
+  border-width: 2px;
 }
 
-.note-wrap[data-pinned="true"] .note-footer {
-  border-width: 3px;
+.note-wrap[data-selected="true"] .note-footer {
+  border-width: 2px;
   border-top: 0;
+}
+
+.note-wrap[data-pinned="true"] {
+  outline: 1px solid CanvasText;
+  outline-offset: 2px;
 }
 
 .feed-bar {

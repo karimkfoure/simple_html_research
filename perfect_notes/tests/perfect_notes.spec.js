@@ -178,6 +178,65 @@ test("cancelar pin no cambia orden y despinear devuelve al inicio de no pineadas
   ]);
 });
 
+test("la nota activa usa borde grueso y la pineada mantiene una marca propia", async ({ page }) => {
+  const initialNoteStyle = await getNote(page, 0).evaluate((note) => {
+    const fieldset = note.querySelector("fieldset");
+    const footer = note.querySelector(".note-footer");
+
+    return {
+      fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
+      footerBorderWidth: getComputedStyle(footer).borderBottomWidth
+    };
+  });
+
+  expect(initialNoteStyle).toEqual({
+    fieldsetBorderWidth: "3px",
+    footerBorderWidth: "3px"
+  });
+
+  const pinnedNote = await addNote(page, "nota pineada");
+  await acceptNextDialog(page);
+  await pinnedNote.getByTestId("toggle-pin").click();
+  await addNote(page, "nota activa");
+
+  const pinnedStyle = await getNote(page, 0).evaluate((note) => {
+    const fieldset = note.querySelector("fieldset");
+    const footer = note.querySelector(".note-footer");
+    const computed = getComputedStyle(note);
+
+    return {
+      fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
+      footerBorderWidth: getComputedStyle(footer).borderBottomWidth,
+      outlineStyle: computed.outlineStyle,
+      outlineWidth: computed.outlineWidth,
+      outlineOffset: computed.outlineOffset
+    };
+  });
+
+  expect(pinnedStyle).toEqual({
+    fieldsetBorderWidth: "1px",
+    footerBorderWidth: "1px",
+    outlineStyle: "solid",
+    outlineWidth: "1px",
+    outlineOffset: "2px"
+  });
+
+  const activeStyle = await getNote(page, 1).evaluate((note) => {
+    const fieldset = note.querySelector("fieldset");
+    const footer = note.querySelector(".note-footer");
+
+    return {
+      fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
+      footerBorderWidth: getComputedStyle(footer).borderBottomWidth
+    };
+  });
+
+  expect(activeStyle).toEqual({
+    fieldsetBorderWidth: "3px",
+    footerBorderWidth: "3px"
+  });
+});
+
 test("texto continuo, nuevo parrafo y navegacion vertical con flechas", async ({ page }) => {
   const firstNote = getNote(page, 0);
   const title = firstNote.getByTestId("note-title");

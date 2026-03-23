@@ -83,14 +83,24 @@ export function createPerfectNotesApp({ document, window }) {
   }
 
   function scheduleTextareaFocus(selector, position = null) {
-    requestAnimationFrame(() => {
+    const applyFocus = () => {
       const textarea = document.querySelector(selector);
+
       if (!textarea) {
-        return;
+        return false;
       }
 
       const resolvedPosition = typeof position === "function" ? position(textarea) : position;
       focusTextarea(textarea, resolvedPosition);
+      return true;
+    };
+
+    if (applyFocus()) {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      applyFocus();
     });
   }
 
