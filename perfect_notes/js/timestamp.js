@@ -28,7 +28,7 @@ export function formatNoteStamp(note, currentDate = new Date()) {
   return `${note.updatedBy} - ${formatHumanTimestamp(note.updatedAt, currentDate)}`;
 }
 
-export function formatHumanTimestamp(value, currentDate = new Date()) {
+function formatHumanTimestamp(value, currentDate = new Date()) {
   const targetDate = new Date(value);
 
   if (Number.isNaN(targetDate.getTime())) {
@@ -63,7 +63,7 @@ export function formatHumanTimestamp(value, currentDate = new Date()) {
   return formatAbsoluteTimestamp(targetDate);
 }
 
-export function formatAbsoluteTimestamp(value) {
+function formatAbsoluteTimestamp(value) {
   const targetDate = new Date(value);
 
   if (Number.isNaN(targetDate.getTime())) {

@@ -43,9 +43,10 @@ Cada nota:
 
 El feed de notas se lee en orden inverso:
 
-- las notas nuevas aparecen arriba;
+- las notas nuevas aparecen arriba del tramo no pineado;
 - las notas pineadas viven siempre por encima del feed normal.
-- la creación de notas pertenece al feed, no al cuerpo de cada nota.
+- la creación de notas pertenece al feed, no al cuerpo de cada nota;
+- la acción `+ nota` vive en una barra fija inferior, siempre visible.
 
 No pensar esto como una app de tareas.
 
@@ -119,14 +120,14 @@ Para la línea activa dentro de la nota:
 
 Para la nota:
 
-- el footer queda reservado para metadata, no para estados artificiales ni acciones
-- editor y timestamp viven solos en el footer
-- las acciones de nota viven inline dentro del `legend`, al lado del título
-- dentro del `legend`, el título queda a la izquierda con ancho auto y las acciones quedan alineadas al extremo derecho de la nota
-- esas acciones deben sentirse como micro-controles icónicos, no como links de texto
+- el footer concentra indicador de pin, acciones contextuales y metadata
+- editor y timestamp viven alineados a la derecha del footer
+- las acciones `pin`/`unpin` y `borrar` viven en el footer, alineadas a la izquierda
+- esas acciones solo se muestran cuando la nota está activa/editable
+- una nota pineada muestra un indicador de pin persistente al inicio del footer, incluso sin foco
 - el pin debe ser un toggle con estado visual claramente distinto entre pineada y no pineada
 - pinear o despinear una nota debe pedir confirmación nativa del navegador antes de ejecutarse
-- junto a esa acción existe `borrar` como icono secundario para eliminar la nota
+- junto a esa acción existe `borrar` como acción textual secundaria para eliminar la nota
 - una nota pineada no debe exponer la acción `borrar`
 - una nota pineada no puede borrarse hasta ser despineada
 - el borrado de nota debe pedir confirmación nativa del navegador antes de ejecutarse
@@ -199,8 +200,8 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - Si el cuerpo completo de una nota está vacío, esa primera línea debe mostrar un placeholder sutil `hola?`.
 - Ese placeholder del cuerpo debe salir de una fuente dedicada e independiente de la del título, para poder reemplazarla más adelante por otro provider.
 - Al crear una nota nueva, el foco debe caer en el cuerpo, no en el título.
-- Cada nota muestra un footer mínimo alineado abajo a la derecha con el editor y la fecha/hora de última edición en hora argentina.
-- El formato visible del timestamp en el footer debe ser `YYYY/MM/DD HH:MM`.
+- Cada nota muestra un footer mínimo con acciones/contexto a la izquierda y editor + timestamp a la derecha.
+- El timestamp visible usa formato humano relativo (`ahora`, `hace X`, `ayer`) y cae a `YYYY/MM/DD HH:MM` cuando corresponde, siempre en hora argentina.
 
 ## Texto normal
 
@@ -242,11 +243,11 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 
 ## Nueva nota
 
-- La acción `+ nota` vive entre notas, no dentro de una nota.
+- La acción `+ nota` vive a nivel feed, no dentro de una nota.
 - Crear una nota nueva no debe requerir contexto adicional.
 - La nota nueva aparece arriba del tramo no pineado del feed.
-- Debe existir un botón `+ nota nueva` más visible justo debajo del bloque de pineadas para crear la nueva nota principal del feed.
-- No debe haber acciones `+ nota` entre notas.
+- Debe existir un botón `+ nota` siempre visible en una barra fija inferior.
+- No debe haber acciones `+ nota` dentro de las notas ni entre notas.
 
 ## Notas pineadas
 
@@ -255,8 +256,9 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - Pinear una nota la sube al inicio de la lista.
 - Despinearla la devuelve al inicio del tramo no pineado.
 - El pin es una acción de nota, no una estructura aparte.
-- El pin debe leerse como una acción del encabezado de la nota.
-- Una nota pineada debe diferenciarse con un borde claramente más grueso que el normal.
+- El pin debe leerse como una acción contextual del footer de la nota.
+- Una nota pineada se diferencia por un indicador de pin persistente y una marca perimetral propia.
+- La nota activa/editándose es la que usa el borde más grueso.
 
 ## Título
 
@@ -273,8 +275,11 @@ El prototipo actual ya debería respetar estas decisiones:
 - usar `+ checklist` sólo desde texto normal;
 - continuar checklist con `Enter`, sin botón `+ item`;
 - usar flechas inline para la indentación;
-- mostrar las notas nuevas arriba;
-- mantener las notas pineadas arriba del resto.
+- mostrar las notas nuevas arriba del tramo no pineado;
+- mantener las notas pineadas arriba del resto;
+- mostrar `+ nota` en una barra fija inferior;
+- resolver los hints dinámicos desde sources dedicados e intercambiables;
+- usar footer contextual para acciones de nota y metadata.
 
 # Mantenimiento
 

@@ -9,7 +9,12 @@ Repo de experimentos HTML estáticos, simples y deployables.
   - UI de notas personales inspirada en Apple Notes a nivel interacción, pero resuelta con HTML, CSS mínimo y JavaScript nativo.
   - Shell HTML: [perfect_notes/index.html](./perfect_notes/index.html)
   - Estilos: [perfect_notes/styles.css](./perfect_notes/styles.css)
-  - Lógica JS: [perfect_notes/js](./perfect_notes/js)
+  - Bootstrap: [perfect_notes/js/main.js](./perfect_notes/js/main.js)
+  - App/UI: [perfect_notes/js/app.js](./perfect_notes/js/app.js)
+  - Modelo y reglas: [perfect_notes/js/model.js](./perfect_notes/js/model.js)
+  - Sources de hints dinámicos: [perfect_notes/js/note-hint-source.js](./perfect_notes/js/note-hint-source.js)
+  - Timestamp humano: [perfect_notes/js/timestamp.js](./perfect_notes/js/timestamp.js)
+  - Helpers genéricos: [perfect_notes/js/helpers.js](./perfect_notes/js/helpers.js)
   - Spec local: [perfect_notes/AGENTS.md](./perfect_notes/AGENTS.md)
   - Tests locales: [perfect_notes/tests/perfect_notes.spec.js](./perfect_notes/tests/perfect_notes.spec.js)
 

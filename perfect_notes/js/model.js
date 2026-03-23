@@ -93,7 +93,7 @@ function stampNote(note) {
   note.updatedBy = DEFAULT_EDITOR_NAME;
 }
 
-export function touchNote(state, noteId) {
+function touchNote(state, noteId) {
   const found = findNote(state, noteId);
 
   if (found) {
@@ -149,7 +149,7 @@ export function canIndent(state, noteId, blockId) {
   return found.list[found.index - 1].type === "check";
 }
 
-export function insertBlockBelow(state, noteId, blockId, type, text = "") {
+function insertBlockBelow(state, noteId, blockId, type, text = "") {
   const found = findBlock(state, noteId, blockId);
 
   if (!found) {
