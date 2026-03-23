@@ -4,16 +4,12 @@ Repo de experimentos HTML estáticos, simples y deployables.
 
 ## Experimentos
 
-- `index`
-  Directorio raíz mínimo del sitio publicado.
-  Código fuente: [index.html](./index.html)
-  URL pública: `https://karimkfoure.github.io/simple_html_research/`
-- `perfect_notes`
-  UI de notas personales inspirada en Apple Notes a nivel interacción, pero resuelta con HTML, CSS mínimo y JavaScript nativo.
-  Código fuente: [perfect_notes/index.html](./perfect_notes/index.html)
-  Spec local: [perfect_notes/AGENTS.md](./perfect_notes/AGENTS.md)
-  Tests locales: [perfect_notes/tests/perfect_notes.spec.js](./perfect_notes/tests/perfect_notes.spec.js)
-  URL pública: `https://karimkfoure.github.io/simple_html_research/perfect_notes/`
+- `index`: [karimkfoure.github.io/simple_html_research/](https://karimkfoure.github.io/simple_html_research/)
+- `perfect_notes`: [karimkfoure.github.io/simple_html_research/perfect_notes/](https://karimkfoure.github.io/simple_html_research/perfect_notes/)
+  - UI de notas personales inspirada en Apple Notes a nivel interacción, pero resuelta con HTML, CSS mínimo y JavaScript nativo.
+  - Código fuente: [perfect_notes/index.html](./perfect_notes/index.html)
+  - Spec local: [perfect_notes/AGENTS.md](./perfect_notes/AGENTS.md)
+  - Tests locales: [perfect_notes/tests/perfect_notes.spec.js](./perfect_notes/tests/perfect_notes.spec.js)
 
 ## Deploy
 
