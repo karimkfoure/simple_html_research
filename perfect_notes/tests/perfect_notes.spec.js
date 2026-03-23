@@ -1,4 +1,6 @@
 const { test, expect } = require("@playwright/test");
+const HUMAN_STAMP_PATTERN =
+  /^Marcos - (ahora|hace \d+ segundos|hace \d+ minutos|hace \d+ horas|ayer|\d{4}\/\d{2}\/\d{2} \d{2}:\d{2})$/;
 
 function getNote(page, index = 0) {
   return page.getByTestId("note").nth(index);
@@ -64,6 +66,30 @@ async function activeTextareaValue(page) {
   });
 }
 
+async function gotoPerfectNotesWithFixedNow(page, isoString) {
+  const now = new Date(isoString).getTime();
+
+  await page.goto("about:blank");
+  await page.addInitScript(({ fixedNow }) => {
+    const OriginalDate = Date;
+    let currentNow = fixedNow;
+
+    class MockDate extends OriginalDate {
+      constructor(...args) {
+        super(...(args.length === 0 ? [currentNow] : args));
+      }
+
+      static now() {
+        return currentNow;
+      }
+    }
+
+    Object.setPrototypeOf(MockDate, OriginalDate);
+    window.Date = MockDate;
+  }, { fixedNow: now });
+  await page.goto("/perfect_notes/");
+}
+
 test.beforeEach(async ({ page }) => {
   await page.goto("/perfect_notes/");
 });
@@ -73,13 +99,35 @@ test("scaffold inicial y nota nueva arriba", async ({ page }) => {
 
   await expect(page.getByTestId("note")).toHaveCount(1);
   await expect(getBlock(firstNote, 0)).toHaveAttribute("placeholder", "hola?");
-  await expect(firstNote.getByTestId("note-stamp")).toHaveText(/^Marcos - \d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/);
+  await expect(firstNote.getByTestId("note-stamp")).toHaveText(HUMAN_STAMP_PATTERN);
 
   await getBlock(firstNote, 0).fill("nota base");
   await addNote(page, "nota nueva");
 
   const state = await snapshot(page);
   expect(state.notes.map((note) => note.blocks[0].text)).toEqual(["nota nueva", "nota base"]);
+});
+
+test("timestamp humano usa segundos minutos horas ayer y fallback absoluto", async ({ page }) => {
+  await gotoPerfectNotesWithFixedNow(page, "2026-03-23T15:00:00.000Z");
+
+  const [{ id: noteId }] = (await snapshot(page)).notes;
+  const stamp = getNote(page, 0).getByTestId("note-stamp");
+  const cases = [
+    { updatedAt: "2026-03-23T14:59:30.000Z", expected: "Marcos - hace 30 segundos" },
+    { updatedAt: "2026-03-23T14:58:00.000Z", expected: "Marcos - hace 2 minutos" },
+    { updatedAt: "2026-03-23T11:00:00.000Z", expected: "Marcos - hace 4 horas" },
+    { updatedAt: "2026-03-22T15:00:00.000Z", expected: "Marcos - ayer" },
+    { updatedAt: "2026-03-20T18:45:00.000Z", expected: "Marcos - 2026/03/20 15:45" }
+  ];
+
+  for (const testCase of cases) {
+    await page.evaluate(
+      ({ id, updatedAt }) => window.__perfectNotesTest.setNoteUpdatedAt(id, updatedAt),
+      { id: noteId, updatedAt: testCase.updatedAt }
+    );
+    await expect(stamp).toHaveText(testCase.expected);
+  }
 });
 
 test("placeholders sutiles y una sola accion global de nueva nota", async ({ page }) => {

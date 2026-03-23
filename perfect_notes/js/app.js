@@ -21,7 +21,10 @@ import {
   exitChecklist,
   ensureNoteHasBlock
 } from "./model.js";
-import { formatNoteStamp, getCaretPositionForLine, getLineInfo } from "./helpers.js";
+import { getCaretPositionForLine, getLineInfo } from "./helpers.js";
+import { formatNoteStamp } from "./timestamp.js";
+
+const STAMP_REFRESH_INTERVAL_MS = 30 * 1000;
 
 export function createPerfectNotesApp({ document, window }) {
   const notesEl = document.querySelector("#notes");
@@ -162,6 +165,20 @@ export function createPerfectNotesApp({ document, window }) {
 
       target.append(fragment);
     }
+  }
+
+  function refreshStamps(currentDate = new Date()) {
+    document.querySelectorAll(".note-wrap[data-note-id]").forEach((noteEl) => {
+      const noteId = Number(noteEl.dataset.noteId);
+      const note = findNote(state, noteId);
+      const stamp = noteEl.querySelector(".note-stamp");
+
+      if (!note || !stamp) {
+        return;
+      }
+
+      stamp.textContent = formatNoteStamp(note.note, currentDate);
+    });
   }
 
   function render() {
@@ -594,10 +611,24 @@ export function createPerfectNotesApp({ document, window }) {
           selectedBlockId: state.selectedBlockId
         })
       );
+    },
+    setNoteUpdatedAt(noteId, updatedAt) {
+      const note = findNote(state, noteId);
+
+      if (!note) {
+        return false;
+      }
+
+      note.note.updatedAt = updatedAt;
+      refreshStamps();
+      return true;
     }
   };
 
   render();
+  window.setInterval(() => {
+    refreshStamps();
+  }, STAMP_REFRESH_INTERVAL_MS);
 
   return {
     render,

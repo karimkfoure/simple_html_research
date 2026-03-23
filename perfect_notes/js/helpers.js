@@ -1,15 +1,5 @@
 export const DEFAULT_EDITOR_NAME = "Marcos";
 
-const argentinaDateTime = new Intl.DateTimeFormat("en-GB", {
-  timeZone: "America/Argentina/Cordoba",
-  day: "2-digit",
-  month: "2-digit",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-  hour12: false
-});
-
 const titleHints = [
   ":)",
   ":(",
@@ -44,14 +34,6 @@ const titleHints = [
 ];
 
 const emptyBodyHints = ["hola?"];
-
-export function formatNoteStamp(note) {
-  const parts = Object.fromEntries(
-    argentinaDateTime.formatToParts(new Date(note.updatedAt)).map((part) => [part.type, part.value])
-  );
-
-  return `${note.updatedBy} - ${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
-}
 
 export function getNextTitleHint(noteList) {
   const usedHints = new Set(noteList.map((note) => note.titleHint).filter(Boolean));
