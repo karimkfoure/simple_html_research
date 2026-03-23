@@ -153,7 +153,9 @@
         flex-wrap: wrap;
         align-items: baseline;
         gap: 0.25rem 0.75rem;
-        padding: 0.2rem 0.2rem 0 0;
+        border: 1px solid;
+        border-top: 0;
+        padding: 0.35rem 0.7rem 0.3rem;
         color: #777;
         font-size: 0.92rem;
       }
@@ -191,6 +193,11 @@
 
       .note-wrap[data-pinned="true"] fieldset {
         border-width: 3px;
+      }
+
+      .note-wrap[data-pinned="true"] .note-footer {
+        border-width: 3px;
+        border-top: 0;
       }
 
       .feed-bar {
