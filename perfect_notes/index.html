@@ -10,6 +10,10 @@
         box-sizing: border-box;
       }
 
+      html {
+        -webkit-text-size-adjust: 100%;
+      }
+
       body {
         margin: 0;
         padding: 1rem;
@@ -134,6 +138,10 @@
         display: flex;
       }
 
+      .block[data-type="check"] > .block-actions {
+        display: none;
+      }
+
       .block-actions {
         padding: 0 0 0.2rem 0;
       }
@@ -229,6 +237,8 @@
         color: inherit;
         font: inherit;
         text-decoration: underline;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .adjust button {
@@ -327,7 +337,7 @@
           </div>
         </div>
         <div class="block-actions">
-          <button type="button" data-action="add-check">+ item</button>
+          <button type="button" data-action="add-check">+ checklist</button>
         </div>
         <div class="children"></div>
       </div>
@@ -573,13 +583,23 @@
       function focusTextarea(textarea, position = null) {
         if (!textarea) return;
 
-        textarea.focus();
+        const viewport = { x: window.scrollX, y: window.scrollY };
+
+        try {
+          textarea.focus({ preventScroll: true });
+        } catch (error) {
+          textarea.focus();
+        }
 
         if (position !== null) {
           textarea.setSelectionRange(position, position);
         }
 
         autoSize(textarea);
+        window.scrollTo(viewport.x, viewport.y);
+        requestAnimationFrame(() => {
+          window.scrollTo(viewport.x, viewport.y);
+        });
       }
 
       function syncSelection() {
@@ -625,8 +645,7 @@
             childrenEl.remove();
           } else {
             checkbox.checked = block.done;
-            addCheckButton.hidden = false;
-            addCheckButton.textContent = "+ item";
+            addCheckButton.hidden = true;
             indentButton.hidden = !canIndent(noteId, block.id);
             outdentButton.hidden = depth === 0;
             renderBlocks(noteId, block.children, childrenEl, depth + 1, emptyPlaceholderBlockId, emptyPlaceholderText);
@@ -637,6 +656,8 @@
       }
 
       function render() {
+        const viewport = { x: window.scrollX, y: window.scrollY };
+
         if (!notes.length) notes = [createNote()];
 
         if (selectedNoteId === null || !findNote(selectedNoteId)) {
@@ -690,6 +711,7 @@
 
         document.querySelectorAll("textarea").forEach(autoSize);
         syncSelection();
+        window.scrollTo(viewport.x, viewport.y);
       }
 
       function focusTitle(noteId) {

@@ -73,9 +73,9 @@ Estas decisiones quedan activas para el MVP salvo cambio explícito:
 - No existe botón `+ subitem`.
 - La acción visible principal dentro de la nota es contextual.
 - Desde texto normal debe leerse como `+ checklist`.
-- Desde un item de checklist debe leerse como `+ item`.
 - Esa acción inserta checklist debajo de la línea actual y, si la línea actual está vacía, crea el checklist en esa misma línea.
 - La indentación es una acción posterior sobre un item ya creado.
+- Dentro de un checklist no debe existir un botón `+ item`: continuar la lista se resuelve con `Enter`.
 - La nota debe sentirse como documento primero, checklist después.
 
 # Qué debe poder hacer el MVP
@@ -116,7 +116,6 @@ El usuario debería sentir:
 Para la línea activa dentro de la nota:
 
 - `+ checklist` cuando la línea activa es texto normal
-- `+ item` cuando la línea activa ya pertenece a un checklist
 
 Para la nota:
 
@@ -160,6 +159,7 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - Los controles deben ser grandes para tocar, pero visualmente livianos.
 - El foco activo debe ser claro sin meter UI aparatosa.
 - El usuario nunca debería sentir que “cambió de editor”.
+- En Safari iOS, botones, `Enter` e indentación no deben provocar flash visual, foco errático ni scroll inesperado de la página.
 
 # Requisitos de implementación
 
@@ -205,7 +205,6 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - Se puede escribir sin elegir ningún modo.
 - Desde una línea de texto normal, `+ checklist` inserta un checklist debajo.
 - Si la línea actual está vacía, `+ checklist` crea el checklist en esa misma línea.
-- Una vez dentro de un checklist, esa misma acción pasa a leerse como `+ item`.
 - `Enter` inserta salto de línea dentro del mismo bloque de texto.
 - Dos `Enter` seguidos al final del bloque crean un nuevo párrafo debajo.
 - `Shift+Enter` queda disponible para salto de línea dentro del bloque.
@@ -219,6 +218,7 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - El borrado de bloques vacíos debe recorrer la nota en el orden visible real del documento, incluyendo subitems antes que su padre superior.
 - Un checklist puede coexistir entre párrafos normales.
 - `Enter` en un item no vacío crea otro item debajo.
+- No debe haber un botón `+ item` debajo de un checklist.
 - `Enter` en un item vacío no debe saltar directo al texto base si todavía hay niveles de indentación.
 - En un item vacío anidado, cada `Enter` debe sacar un solo nivel por vez.
 - Sólo al llegar al nivel base, `Enter` en item vacío vuelve esa línea a texto normal.
@@ -267,7 +267,8 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 El prototipo actual ya debería respetar estas decisiones:
 
 - no exponer `+ subitem`;
-- usar `+ item` desde texto normal o checklist;
+- usar `+ checklist` sólo desde texto normal;
+- continuar checklist con `Enter`, sin botón `+ item`;
 - usar flechas inline para la indentación;
 - mostrar las notas nuevas arriba;
 - mantener las notas pineadas arriba del resto.
