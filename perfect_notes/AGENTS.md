@@ -200,6 +200,7 @@ El teclado puede ayudar, pero no puede ser requisito para entender el sistema.
 - Ese placeholder del cuerpo debe salir de una fuente dedicada e independiente de la del título, para poder reemplazarla más adelante por otro provider.
 - Al crear una nota nueva, el foco debe caer en el cuerpo, no en el título.
 - Cada nota muestra un footer mínimo alineado abajo a la derecha con el editor y la fecha/hora de última edición en hora argentina.
+- El formato visible del timestamp en el footer debe ser `YYYY/MM/DD HH:MM`.
 
 ## Texto normal
 

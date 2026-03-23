@@ -467,7 +467,7 @@
         const parts = Object.fromEntries(
           argentinaDateTime.formatToParts(new Date(note.updatedAt)).map((part) => [part.type, part.value])
         );
-        return `${note.updatedBy} - ${parts.day}/${parts.month}/${parts.year} ${parts.hour}:${parts.minute}`;
+        return `${note.updatedBy} - ${parts.year}/${parts.month}/${parts.day} ${parts.hour}:${parts.minute}`;
       }
 
       function randomIndex(length) {
