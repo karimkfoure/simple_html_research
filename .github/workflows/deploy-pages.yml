@@ -5,7 +5,8 @@ on:
     branches:
       - main
     paths:
-      - "perfect_notes/**"
+      - "index.html"
+      - "*/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -31,10 +32,13 @@ jobs:
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
+      - name: Build Pages payload
+        run: node scripts/build-pages.mjs
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: ./perfect_notes
+          path: ./_site
 
       - name: Deploy to GitHub Pages
         id: deployment

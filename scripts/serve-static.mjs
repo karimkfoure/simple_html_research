@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize, resolve } from "node:path";
 
-const rootDir = resolve(process.cwd(), "perfect_notes");
+const rootDir = resolve(process.cwd());
 const port = 4317;
 
 const mimeTypes = {
@@ -16,7 +16,7 @@ const mimeTypes = {
 };
 
 function resolvePath(urlPathname = "/") {
-  const pathname = urlPathname === "/" ? "/index.html" : urlPathname;
+  const pathname = urlPathname === "/" ? "/index.html" : urlPathname.endsWith("/") ? `${urlPathname}index.html` : urlPathname;
   const safePath = normalize(pathname).replace(/^(\.\.[/\\])+/, "");
   return join(rootDir, safePath);
 }

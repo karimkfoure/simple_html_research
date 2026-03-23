@@ -65,7 +65,7 @@ async function activeTextareaValue(page) {
 }
 
 test.beforeEach(async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/perfect_notes/");
 });
 
 test("scaffold inicial y nota nueva arriba", async ({ page }) => {

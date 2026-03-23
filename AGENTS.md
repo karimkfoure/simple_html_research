@@ -39,8 +39,8 @@
 
 - El deploy debe correr por GitHub Actions.
 - La rama principal debe poder publicarse de forma estable en GitHub Pages.
-- Un push a `main` con cambios de runtime del sitio debe disparar deploy.
-- Cambios solo de documentación o metadata no deberían disparar publish automático.
+- El índice raíz y cualquier cambio dentro de un directorio de experimento publicado deben disparar deploy.
+- Cambios sólo en documentación o metadata general del root no necesitan publish automático.
 - Debe existir la opción de deploy manual con `workflow_dispatch`.
 - La configuración de Pages debe usar `Source: GitHub Actions`.
 

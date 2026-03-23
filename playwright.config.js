@@ -1,7 +1,8 @@
 const { defineConfig, devices } = require("@playwright/test");
 
 module.exports = defineConfig({
-  testDir: "./tests",
+  testDir: ".",
+  testMatch: ["**/tests/**/*.spec.js"],
   timeout: 30_000,
   expect: {
     timeout: 5_000
@@ -13,7 +14,7 @@ module.exports = defineConfig({
     trace: "on-first-retry"
   },
   webServer: {
-    command: "node tests/serve.mjs",
+    command: "node scripts/serve-static.mjs",
     url: "http://127.0.0.1:4317",
     reuseExistingServer: false
   },
