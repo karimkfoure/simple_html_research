@@ -264,21 +264,29 @@
     </style>
   </head>
   <body>
-    <main id="notes" aria-label="Listado de notas"></main>
+    <main id="notes" aria-label="Listado de notas" data-testid="feed"></main>
 
     <template id="note-template">
-      <section class="note-wrap">
+      <section class="note-wrap" data-testid="note">
         <fieldset>
           <legend>
             <textarea
               class="note-title"
+              data-testid="note-title"
               rows="1"
               spellcheck="true"
               autocapitalize="sentences"
               aria-label="Título de la nota"
             ></textarea>
             <div class="note-head-actions">
-              <button type="button" class="note-pin" data-action="toggle-pin" aria-label="Pinear nota" title="Pinear nota">
+              <button
+                type="button"
+                class="note-pin"
+                data-action="toggle-pin"
+                data-testid="toggle-pin"
+                aria-label="Pinear nota"
+                title="Pinear nota"
+              >
                 <svg
                   class="note-action-icon"
                   viewBox="0 0 24 24"
@@ -300,7 +308,14 @@
                   />
                 </svg>
               </button>
-              <button type="button" class="note-delete" data-action="delete-note" aria-label="Borrar nota" title="Borrar nota">
+              <button
+                type="button"
+                class="note-delete"
+                data-action="delete-note"
+                data-testid="delete-note"
+                aria-label="Borrar nota"
+                title="Borrar nota"
+              >
                 <svg class="note-action-icon" viewBox="0 0 24 24" aria-hidden="true">
                   <path
                     fill="currentColor"
@@ -310,34 +325,40 @@
               </button>
             </div>
           </legend>
-          <div class="blocks"></div>
+          <div class="blocks" data-testid="note-blocks"></div>
         </fieldset>
         <div class="note-footer">
-          <div class="note-stamp" aria-label="Última edición"></div>
+          <div class="note-stamp" data-testid="note-stamp" aria-label="Última edición"></div>
         </div>
       </section>
     </template>
 
     <template id="feed-action-template">
       <div class="feed-action">
-        <button type="button" data-action="insert-note">+ nota</button>
+        <button type="button" data-action="insert-note" data-testid="insert-note">+ nota</button>
       </div>
     </template>
 
     <template id="block-template">
-      <div class="block">
+      <div class="block" data-testid="block">
         <div class="block-row">
           <label class="toggle">
-            <input type="checkbox" />
+            <input type="checkbox" data-testid="check-toggle" />
           </label>
-          <textarea class="block-text" rows="1" spellcheck="true" autocapitalize="sentences"></textarea>
+          <textarea
+            class="block-text"
+            data-testid="block-text"
+            rows="1"
+            spellcheck="true"
+            autocapitalize="sentences"
+          ></textarea>
           <div class="adjust">
-            <button type="button" data-action="outdent" aria-label="Sacar nivel">←</button>
-            <button type="button" data-action="indent" aria-label="Indentar">→</button>
+            <button type="button" data-action="outdent" data-testid="outdent" aria-label="Sacar nivel">←</button>
+            <button type="button" data-action="indent" data-testid="indent" aria-label="Indentar">→</button>
           </div>
         </div>
         <div class="block-actions">
-          <button type="button" data-action="add-check">+ checklist</button>
+          <button type="button" data-action="add-check" data-testid="add-check">+ checklist</button>
         </div>
         <div class="children"></div>
       </div>
@@ -1233,6 +1254,18 @@
       window.addEventListener("resize", () => {
         document.querySelectorAll("textarea").forEach(autoSize);
       });
+
+      window.__perfectNotesTest = {
+        snapshot() {
+          return JSON.parse(
+            JSON.stringify({
+              notes,
+              selectedNoteId,
+              selectedBlockId
+            })
+          );
+        }
+      };
 
       selectedNoteId = notes[0].id;
       selectedBlockId = notes[0].blocks[0].id;

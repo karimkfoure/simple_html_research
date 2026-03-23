@@ -1,0 +1,298 @@
+const { test, expect } = require("@playwright/test");
+
+function getNote(page, index = 0) {
+  return page.getByTestId("note").nth(index);
+}
+
+function getBlock(note, index = 0) {
+  return note.getByTestId("block-text").nth(index);
+}
+
+function flattenBlocks(blocks, depth = 0, output = []) {
+  for (const block of blocks) {
+    output.push({
+      id: block.id,
+      type: block.type,
+      text: block.text,
+      depth,
+      done: block.done
+    });
+    flattenBlocks(block.children, depth + 1, output);
+  }
+
+  return output;
+}
+
+async function snapshot(page) {
+  return page.evaluate(() => window.__perfectNotesTest.snapshot());
+}
+
+async function noteState(page, noteIndex = 0) {
+  const state = await snapshot(page);
+  return state.notes[noteIndex];
+}
+
+async function flatNote(page, noteIndex = 0) {
+  return flattenBlocks((await noteState(page, noteIndex)).blocks);
+}
+
+async function acceptNextDialog(page) {
+  page.once("dialog", (dialog) => dialog.accept());
+}
+
+async function dismissNextDialog(page) {
+  page.once("dialog", (dialog) => dialog.dismiss());
+}
+
+async function addNote(page, bodyText = "") {
+  const beforeIds = (await snapshot(page)).notes.map((note) => note.id);
+  await page.getByTestId("insert-note").first().click();
+  const state = await snapshot(page);
+  const newNoteId = state.notes.find((note) => !beforeIds.includes(note.id))?.id;
+  const topNote = page.locator(`[data-testid="note"][data-note-id="${newNoteId}"]`);
+  await expect(getBlock(topNote, 0)).toBeFocused();
+  if (bodyText) {
+    await getBlock(topNote, 0).fill(bodyText);
+  }
+  return topNote;
+}
+
+async function activeTextareaValue(page) {
+  return page.evaluate(() => {
+    const active = document.activeElement;
+    return active && active.tagName === "TEXTAREA" ? active.value : null;
+  });
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.goto("/");
+});
+
+test("scaffold inicial y nota nueva arriba", async ({ page }) => {
+  const firstNote = getNote(page, 0);
+
+  await expect(page.getByTestId("note")).toHaveCount(1);
+  await expect(getBlock(firstNote, 0)).toHaveAttribute("placeholder", "hola?");
+  await expect(firstNote.getByTestId("note-stamp")).toHaveText(/^Marcos - \d{4}\/\d{2}\/\d{2} \d{2}:\d{2}$/);
+
+  await getBlock(firstNote, 0).fill("nota base");
+  await addNote(page, "nota nueva");
+
+  const state = await snapshot(page);
+  expect(state.notes.map((note) => note.blocks[0].text)).toEqual(["nota nueva", "nota base"]);
+});
+
+test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => {
+  const firstNote = getNote(page, 0);
+  await getBlock(firstNote, 0).fill("nota base");
+
+  const secondNote = await addNote(page, "nota pineable");
+  await acceptNextDialog(page);
+  await secondNote.getByTestId("toggle-pin").click();
+
+  await addNote(page, "nota libre");
+
+  let state = await snapshot(page);
+  expect(state.notes.map((note) => ({ text: note.blocks[0].text, pinned: note.pinned }))).toEqual([
+    { text: "nota pineable", pinned: true },
+    { text: "nota libre", pinned: false },
+    { text: "nota base", pinned: false }
+  ]);
+
+  await expect(getNote(page, 0).getByTestId("delete-note")).toBeHidden();
+  await expect(getNote(page, 1).getByTestId("delete-note")).toBeVisible();
+
+  await dismissNextDialog(page);
+  await getNote(page, 1).getByTestId("delete-note").click();
+  await expect(page.getByTestId("note")).toHaveCount(3);
+
+  await acceptNextDialog(page);
+  await getNote(page, 1).getByTestId("delete-note").click();
+
+  state = await snapshot(page);
+  expect(state.notes.map((note) => note.blocks[0].text)).toEqual(["nota pineable", "nota base"]);
+});
+
+test("texto continuo, nuevo parrafo y navegacion vertical con flechas", async ({ page }) => {
+  const firstNote = getNote(page, 0);
+  const title = firstNote.getByTestId("note-title");
+
+  await title.fill("Mi nota");
+  await title.press("Enter");
+  await expect(getBlock(firstNote, 0)).toBeFocused();
+
+  await getBlock(firstNote, 0).type("linea uno");
+  await getBlock(firstNote, 0).press("Enter");
+  await getBlock(firstNote, 0).type("linea dos");
+
+  let state = await noteState(page, 0);
+  expect(state.blocks.map((block) => block.text)).toEqual(["linea uno\nlinea dos"]);
+
+  await getBlock(firstNote, 0).press("Enter");
+  await getBlock(firstNote, 0).press("Enter");
+  await expect(getBlock(firstNote, 1)).toBeFocused();
+  await getBlock(firstNote, 1).type("parrafo dos");
+
+  state = await noteState(page, 0);
+  expect(state.blocks.map((block) => block.text)).toEqual(["linea uno\nlinea dos", "parrafo dos"]);
+
+  await getBlock(firstNote, 1).evaluate((element) => element.setSelectionRange(0, 0));
+  await getBlock(firstNote, 1).press("ArrowUp");
+  await expect(getBlock(firstNote, 0)).toBeFocused();
+
+  await getBlock(firstNote, 0).evaluate((element) => element.setSelectionRange(0, 0));
+  await getBlock(firstNote, 0).press("ArrowUp");
+  await expect(title).toBeFocused();
+
+  await title.evaluate((element) => {
+    const position = element.value.length;
+    element.setSelectionRange(position, position);
+  });
+  await title.press("ArrowDown");
+  await expect(getBlock(firstNote, 0)).toBeFocused();
+});
+
+test("checklist: insercion, toggle, indentacion, enter y salida escalonada", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await note.getByTestId("add-check").first().click();
+  await expect(note.getByTestId("check-toggle")).toHaveCount(1);
+  await expect(getBlock(note, 0)).toBeFocused();
+
+  await getBlock(note, 0).fill("item 1");
+  await note.getByTestId("check-toggle").first().check();
+  let state = await noteState(page, 0);
+  expect(state.blocks[0].done).toBe(true);
+  await note.getByTestId("check-toggle").first().uncheck();
+
+  await getBlock(note, 0).press("Enter");
+  await getBlock(note, 1).fill("item 2");
+  await getBlock(note, 1).press("Tab");
+  await getBlock(note, 1).press("Enter");
+  await getBlock(note, 2).fill("item 3");
+  await getBlock(note, 2).press("Tab");
+
+  let flat = await flatNote(page, 0);
+  expect(flat.map(({ type, text, depth }) => ({ type, text, depth }))).toEqual([
+    { type: "check", text: "item 1", depth: 0 },
+    { type: "check", text: "item 2", depth: 1 },
+    { type: "check", text: "item 3", depth: 2 }
+  ]);
+
+  await getBlock(note, 2).press("Enter");
+  flat = await flatNote(page, 0);
+  expect(flat.at(-1)).toMatchObject({ type: "check", text: "", depth: 2 });
+
+  await getBlock(note, 3).press("Enter");
+  flat = await flatNote(page, 0);
+  expect(flat.at(-1)).toMatchObject({ type: "check", text: "", depth: 1 });
+
+  await getBlock(note, 3).press("Enter");
+  flat = await flatNote(page, 0);
+  expect(flat.at(-1)).toMatchObject({ type: "check", text: "", depth: 0 });
+
+  await getBlock(note, 3).press("Enter");
+  flat = await flatNote(page, 0);
+  expect(flat.at(-1)).toMatchObject({ type: "text", text: "", depth: 0 });
+  await expect(note.getByTestId("add-check").last()).toHaveText("+ checklist");
+});
+
+test("crear checklist debajo de texto y no exponer + item dentro del checklist", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await getBlock(note, 0).fill("intro");
+  await note.getByTestId("add-check").first().click();
+  await expect(note.getByTestId("check-toggle")).toHaveCount(1);
+
+  const state = await noteState(page, 0);
+  expect(state.blocks.map((block) => ({ type: block.type, text: block.text }))).toEqual([
+    { type: "text", text: "intro" },
+    { type: "check", text: "" }
+  ]);
+
+  await getBlock(note, 1).click();
+  await expect(note.getByRole("button", { name: "+ item" })).toHaveCount(0);
+});
+
+test("backspace borra en orden visible real, pasando por subitems antes que el padre", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await getBlock(note, 0).fill("texto");
+  await note.getByTestId("add-check").first().click();
+
+  await getBlock(note, 1).fill("item1");
+  await getBlock(note, 1).press("Enter");
+  await getBlock(note, 2).fill("sub1");
+  await getBlock(note, 2).press("Tab");
+  await getBlock(note, 2).press("Enter");
+  await getBlock(note, 3).fill("sub2");
+  await getBlock(note, 3).press("Tab");
+
+  await getBlock(note, 3).press("Enter");
+  await getBlock(note, 4).press("Enter");
+  await getBlock(note, 4).press("Enter");
+  await getBlock(note, 4).press("Enter");
+  await getBlock(note, 4).fill("nuevo texto");
+  await getBlock(note, 4).press("Enter");
+  await getBlock(note, 4).press("Enter");
+  await getBlock(note, 5).fill("otro nuevo texto");
+
+  let flat = await flatNote(page, 0);
+  expect(flat.map(({ text, depth, type }) => ({ text, depth, type }))).toEqual([
+    { text: "texto", depth: 0, type: "text" },
+    { text: "item1", depth: 0, type: "check" },
+    { text: "sub1", depth: 1, type: "check" },
+    { text: "sub2", depth: 2, type: "check" },
+    { text: "nuevo texto", depth: 0, type: "text" },
+    { text: "otro nuevo texto", depth: 0, type: "text" }
+  ]);
+
+  await getBlock(note, 5).fill("");
+  await getBlock(note, 5).press("Backspace");
+  await expect(getBlock(note, 4)).toBeFocused();
+  expect(await activeTextareaValue(page)).toBe("nuevo texto");
+
+  await getBlock(note, 4).fill("");
+  await getBlock(note, 4).press("Backspace");
+  await expect(getBlock(note, 3)).toBeFocused();
+  expect(await activeTextareaValue(page)).toBe("sub2");
+
+  await getBlock(note, 3).fill("");
+  await getBlock(note, 3).press("Backspace");
+  await expect(getBlock(note, 2)).toBeFocused();
+  expect(await activeTextareaValue(page)).toBe("sub1");
+
+  await getBlock(note, 2).fill("");
+  await getBlock(note, 2).press("Backspace");
+  await expect(getBlock(note, 1)).toBeFocused();
+  expect(await activeTextareaValue(page)).toBe("item1");
+});
+
+test("en mobile webkit las acciones clave no provocan saltos bruscos de viewport", async ({ page }, testInfo) => {
+  test.skip(!(testInfo.project.use && testInfo.project.use.isMobile), "solo mobile");
+
+  for (let index = 0; index < 8; index += 1) {
+    await addNote(page, `nota ${index}`);
+  }
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+
+  const bottomNote = getNote(page, await page.getByTestId("note").count() - 1);
+  await bottomNote.scrollIntoViewIfNeeded();
+  await getBlock(bottomNote, 0).click();
+
+  const beforeCheck = await page.evaluate(() => window.scrollY);
+  await bottomNote.getByTestId("add-check").first().click();
+  const afterCheck = await page.evaluate(() => window.scrollY);
+  expect(Math.abs(afterCheck - beforeCheck)).toBeLessThan(80);
+
+  await getBlock(bottomNote, 0).fill("item base");
+  await getBlock(bottomNote, 0).press("Enter");
+  await getBlock(bottomNote, 1).fill("item hijo");
+  await getBlock(bottomNote, 1).click();
+
+  const beforeIndent = await page.evaluate(() => window.scrollY);
+  await bottomNote.locator('[data-testid="indent"]:visible').first().click();
+  const afterIndent = await page.evaluate(() => window.scrollY);
+  expect(Math.abs(afterIndent - beforeIndent)).toBeLessThan(80);
+});

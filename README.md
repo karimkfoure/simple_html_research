@@ -22,7 +22,16 @@ Repo de experimentos HTML estáticos, simples y deployables.
 
 - Abrir el experimento directamente desde [perfect_notes/index.html](./perfect_notes/index.html), o servir el directorio con un servidor estático mínimo.
 - No hay build step.
-- No hay dependencias.
+- No hay dependencias de runtime.
+
+## Testing
+
+- La suite E2E usa Playwright.
+- Instalar dependencias de desarrollo con `npm install`.
+- Instalar browsers locales con `npx playwright install chromium webkit`.
+- Correr toda la suite con `npm run test:e2e`.
+- Hay variantes opcionales: `npm run test:e2e:headed` y `npm run test:e2e:ui`.
+- La suite levanta `perfect_notes/` como sitio estático local y cubre desktop + WebKit mobile.
 
 ## Notas
 
