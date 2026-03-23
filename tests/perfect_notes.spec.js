@@ -82,6 +82,23 @@ test("scaffold inicial y nota nueva arriba", async ({ page }) => {
   expect(state.notes.map((note) => note.blocks[0].text)).toEqual(["nota nueva", "nota base"]);
 });
 
+test("placeholders sutiles y una sola accion global de nueva nota", async ({ page }) => {
+  const firstNote = getNote(page, 0);
+
+  await expect(firstNote.getByTestId("note-title")).toHaveAttribute("placeholder", /.+/);
+  await expect(getBlock(firstNote, 0)).toHaveAttribute("placeholder", "hola?");
+  await expect(page.getByTestId("insert-note")).toHaveCount(1);
+  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota nueva");
+
+  const pinnedNote = await addNote(page, "nota fija");
+  await acceptNextDialog(page);
+  await pinnedNote.getByTestId("toggle-pin").click();
+  await addNote(page, "nota libre");
+
+  await expect(page.getByTestId("insert-note")).toHaveCount(1);
+  await expect(page.getByTestId("insert-note").first()).toHaveText("+ nota nueva");
+});
+
 test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => {
   const firstNote = getNote(page, 0);
   await getBlock(firstNote, 0).fill("nota base");
@@ -111,6 +128,33 @@ test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => 
 
   state = await snapshot(page);
   expect(state.notes.map((note) => note.blocks[0].text)).toEqual(["nota pineable", "nota base"]);
+});
+
+test("cancelar pin no cambia orden y despinear devuelve al inicio de no pineadas", async ({ page }) => {
+  await getBlock(getNote(page, 0), 0).fill("nota base");
+
+  const movingNote = await addNote(page, "nota movible");
+  await dismissNextDialog(page);
+  await movingNote.getByTestId("toggle-pin").click();
+
+  let state = await snapshot(page);
+  expect(state.notes.map((note) => ({ text: note.blocks[0].text, pinned: note.pinned }))).toEqual([
+    { text: "nota movible", pinned: false },
+    { text: "nota base", pinned: false }
+  ]);
+
+  await acceptNextDialog(page);
+  await getNote(page, 0).getByTestId("toggle-pin").click();
+  await addNote(page, "otra");
+  await acceptNextDialog(page);
+  await getNote(page, 0).getByTestId("toggle-pin").click();
+
+  state = await snapshot(page);
+  expect(state.notes.map((note) => ({ text: note.blocks[0].text, pinned: note.pinned }))).toEqual([
+    { text: "nota movible", pinned: false },
+    { text: "otra", pinned: false },
+    { text: "nota base", pinned: false }
+  ]);
 });
 
 test("texto continuo, nuevo parrafo y navegacion vertical con flechas", async ({ page }) => {
@@ -197,6 +241,16 @@ test("checklist: insercion, toggle, indentacion, enter y salida escalonada", asy
   await expect(note.getByTestId("add-check").last()).toHaveText("+ checklist");
 });
 
+test("checklist sobre texto vacio convierte el bloque actual en lugar", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await note.getByTestId("add-check").first().click();
+
+  const state = await noteState(page, 0);
+  expect(state.blocks).toHaveLength(1);
+  expect(state.blocks[0]).toMatchObject({ type: "check", text: "" });
+});
+
 test("crear checklist debajo de texto y no exponer + item dentro del checklist", async ({ page }) => {
   const note = getNote(page, 0);
 
@@ -212,6 +266,51 @@ test("crear checklist debajo de texto y no exponer + item dentro del checklist",
 
   await getBlock(note, 1).click();
   await expect(note.getByRole("button", { name: "+ item" })).toHaveCount(0);
+});
+
+test("flechas inline permiten indentar y sacar nivel sin teclado complejo", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await note.getByTestId("add-check").first().click();
+  await getBlock(note, 0).fill("padre");
+  await getBlock(note, 0).press("Enter");
+  await getBlock(note, 1).fill("hijo");
+  await getBlock(note, 1).click();
+  await note.locator('[data-testid="indent"]:visible').first().click();
+
+  let flat = await flatNote(page, 0);
+  expect(flat.map(({ text, depth }) => ({ text, depth }))).toEqual([
+    { text: "padre", depth: 0 },
+    { text: "hijo", depth: 1 }
+  ]);
+
+  await getBlock(note, 1).click();
+  await note.locator('[data-testid="outdent"]:visible').first().click();
+
+  flat = await flatNote(page, 0);
+  expect(flat.map(({ text, depth }) => ({ text, depth }))).toEqual([
+    { text: "padre", depth: 0 },
+    { text: "hijo", depth: 0 }
+  ]);
+});
+
+test("salir de checklist vacio en base conserva hijos como bloques siguientes", async ({ page }) => {
+  const note = getNote(page, 0);
+
+  await note.getByTestId("add-check").first().click();
+  await getBlock(note, 0).fill("padre");
+  await getBlock(note, 0).press("Enter");
+  await getBlock(note, 1).fill("hijo");
+  await getBlock(note, 1).press("Tab");
+  await getBlock(note, 0).fill("");
+  await getBlock(note, 0).press("Enter");
+
+  const flat = await flatNote(page, 0);
+  expect(flat.map(({ type, text, depth }) => ({ type, text, depth }))).toEqual([
+    { type: "text", text: "", depth: 0 },
+    { type: "check", text: "hijo", depth: 0 }
+  ]);
+  await expect(note.getByTestId("add-check").first()).toHaveText("+ checklist");
 });
 
 test("backspace borra en orden visible real, pasando por subitems antes que el padre", async ({ page }) => {
@@ -266,6 +365,42 @@ test("backspace borra en orden visible real, pasando por subitems antes que el p
   await getBlock(note, 2).press("Backspace");
   await expect(getBlock(note, 1)).toBeFocused();
   expect(await activeTextareaValue(page)).toBe("item1");
+});
+
+test("borrar la ultima nota recrea una nota vacia", async ({ page }) => {
+  await acceptNextDialog(page);
+  await getNote(page, 0).getByTestId("delete-note").click();
+
+  await expect(page.getByTestId("note")).toHaveCount(1);
+  await expect(getNote(page, 0).getByTestId("note-title")).toHaveAttribute("placeholder", /.+/);
+  await expect(getBlock(getNote(page, 0), 0)).toHaveAttribute("placeholder", "hola?");
+
+  const state = await snapshot(page);
+  expect(state.notes).toHaveLength(1);
+  expect(state.notes[0].blocks).toHaveLength(1);
+  expect(state.notes[0].blocks[0]).toMatchObject({ type: "text", text: "" });
+});
+
+test("una nota pineada no se borra ni siquiera con click programatico al boton oculto", async ({ page }) => {
+  const pinnedNote = await addNote(page, "nota protegida");
+  await acceptNextDialog(page);
+  await pinnedNote.getByTestId("toggle-pin").click();
+
+  let dialogSeen = false;
+  page.on("dialog", (dialog) => {
+    dialogSeen = true;
+    dialog.dismiss();
+  });
+
+  await page.evaluate(() => {
+    const deleteButton = document.querySelector('[data-testid="note"][data-pinned="true"] [data-testid="delete-note"]');
+    deleteButton?.click();
+  });
+
+  const state = await snapshot(page);
+  expect(state.notes).toHaveLength(2);
+  expect(state.notes[0]).toMatchObject({ pinned: true });
+  expect(dialogSeen).toBe(false);
 });
 
 test("en mobile webkit las acciones clave no provocan saltos bruscos de viewport", async ({ page }, testInfo) => {
