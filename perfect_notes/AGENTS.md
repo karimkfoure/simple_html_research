@@ -127,6 +127,8 @@ Para la nota:
 - el pin debe ser un toggle con estado visual claramente distinto entre pineada y no pineada
 - pinear o despinear una nota debe pedir confirmación nativa del navegador antes de ejecutarse
 - junto a esa acción existe `borrar` como icono secundario para eliminar la nota
+- una nota pineada no debe exponer la acción `borrar`
+- una nota pineada no puede borrarse hasta ser despineada
 - el borrado de nota debe pedir confirmación nativa del navegador antes de ejecutarse
 
 Para un item de checklist activo, inline:

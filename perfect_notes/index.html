@@ -689,6 +689,7 @@
           const blocksEl = fragment.querySelector(".blocks");
           const footerStamp = fragment.querySelector(".note-stamp");
           const pinButton = fragment.querySelector('[data-action="toggle-pin"]');
+          const deleteButton = fragment.querySelector('[data-action="delete-note"]');
 
           wrap.dataset.noteId = note.id;
           wrap.dataset.selected = String(note.id === selectedNoteId);
@@ -699,6 +700,7 @@
           pinButton.setAttribute("aria-pressed", String(note.pinned));
           pinButton.setAttribute("aria-label", note.pinned ? "Despinear nota" : "Pinear nota");
           pinButton.setAttribute("title", note.pinned ? "Despinear nota" : "Pinear nota");
+          deleteButton.hidden = note.pinned;
 
           const emptyPlaceholderBlockId = noteHasBodyContent(note.blocks) ? null : note.blocks[0]?.id ?? null;
           renderBlocks(note.id, note.blocks, blocksEl, 0, emptyPlaceholderBlockId, note.bodyHint);
@@ -995,6 +997,7 @@
       function deleteNote(noteId) {
         const found = findNote(noteId);
         if (!found) return;
+        if (found.note.pinned) return;
 
         if (!window.confirm("Borrar esta nota?")) return;
 
