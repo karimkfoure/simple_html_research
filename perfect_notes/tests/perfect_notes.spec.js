@@ -138,7 +138,9 @@ test("placeholders sutiles y una sola accion global de nueva nota", async ({ pag
   await expect(getBlock(firstNote, 0)).toHaveAttribute("placeholder", "hola?");
   await expect(feedBar).toBeVisible();
   await expect(firstNote.getByTestId("toggle-pin")).toBeVisible();
-  await expect(firstNote.getByTestId("toggle-pin")).toHaveText("pinear");
+  await expect(firstNote.getByTestId("toggle-pin")).toHaveText("pin");
+  await expect(firstNote.getByTestId("toggle-pin")).toHaveAttribute("aria-label", "Pinear nota");
+  await expect(firstNote.getByTestId("pinned-indicator")).toBeHidden();
   await expect(firstNote.getByTestId("delete-note")).toBeVisible();
   await expect(firstNote.getByTestId("note-footer-actions")).toBeVisible();
   await expect(page.getByTestId("insert-note")).toHaveCount(1);
@@ -182,7 +184,9 @@ test("pin, orden del feed y borrado solo para no pineadas", async ({ page }) => 
     { text: "nota base", pinned: false }
   ]);
 
-  await expect(getNote(page, 0).getByTestId("toggle-pin")).toHaveText("despinear");
+  await expect(getNote(page, 0).getByTestId("toggle-pin")).toHaveText("unpin");
+  await expect(getNote(page, 0).getByTestId("toggle-pin")).toHaveAttribute("aria-label", "Despinear nota");
+  await expect(getNote(page, 0).getByTestId("pinned-indicator")).toBeVisible();
   await expect(getNote(page, 0).getByTestId("delete-note")).toBeHidden();
   await expect(getNote(page, 1).getByTestId("delete-note")).toBeVisible();
   await expect(getNote(page, 2).getByTestId("delete-note")).toBeHidden();
@@ -249,13 +253,15 @@ test("la nota activa usa borde grueso y la pineada mantiene una marca propia", a
     const fieldset = note.querySelector("fieldset");
     const footer = note.querySelector(".note-footer");
     const computed = getComputedStyle(note);
+    const indicator = note.querySelector('[data-testid="pinned-indicator"]');
 
     return {
       fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
       footerBorderWidth: getComputedStyle(footer).borderBottomWidth,
       outlineStyle: computed.outlineStyle,
       outlineOffset: computed.outlineOffset,
-      boxShadow: computed.boxShadow
+      boxShadow: computed.boxShadow,
+      indicatorDisplay: getComputedStyle(indicator).display
     };
   });
 
@@ -264,6 +270,7 @@ test("la nota activa usa borde grueso y la pineada mantiene una marca propia", a
   expect(pinnedStyle.outlineStyle).toBe("solid");
   expect(Number.parseFloat(pinnedStyle.outlineOffset)).toBeGreaterThan(2);
   expect(pinnedStyle.boxShadow).toBe("none");
+  expect(pinnedStyle.indicatorDisplay).not.toBe("none");
 
   const activeStyle = await getNote(page, 1).evaluate((note) => {
     const fieldset = note.querySelector("fieldset");

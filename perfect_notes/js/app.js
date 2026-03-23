@@ -213,7 +213,7 @@ export function createPerfectNotesApp({ document, window }) {
 
       pinButton.setAttribute("aria-pressed", String(note.pinned));
       pinButton.setAttribute("aria-label", note.pinned ? "Despinear nota" : "Pinear nota");
-      pinButton.textContent = note.pinned ? "despinear" : "pinear";
+      pinButton.textContent = note.pinned ? "unpin" : "pin";
 
       deleteButton.setAttribute("aria-label", "Borrar nota");
       deleteButton.textContent = "borrar";

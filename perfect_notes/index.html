@@ -31,6 +31,14 @@
           <div class="blocks" data-testid="note-blocks"></div>
         </fieldset>
         <div class="note-footer">
+          <div class="note-pinned-indicator" data-testid="pinned-indicator" aria-hidden="true">
+            <svg viewBox="0 0 16 16" focusable="false">
+              <path
+                d="M5 2h6v1.25L9.8 5.1v2.2l2 1.4V10H8.7v4.2L8 15l-.7-.8V10H4.2V8.7l2-1.4V5.1L5 3.25Z"
+                fill="currentColor"
+              ></path>
+            </svg>
+          </div>
           <div class="note-footer-actions" data-testid="note-footer-actions">
             <button
               type="button"
@@ -39,7 +47,7 @@
               data-testid="toggle-pin"
               aria-label="Pinear nota"
             >
-              pinear
+              pin
             </button>
             <button
               type="button"

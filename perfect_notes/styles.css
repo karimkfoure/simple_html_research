@@ -168,6 +168,23 @@ input[type="checkbox"] {
   opacity: 0.8;
 }
 
+.note-pinned-indicator {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 1rem;
+  min-block-size: 1rem;
+}
+
+.note-wrap[data-pinned="true"] .note-pinned-indicator {
+  display: inline-flex;
+}
+
+.note-pinned-indicator svg {
+  inline-size: 1rem;
+  block-size: 1rem;
+}
+
 .note-stamp {
   margin-left: auto;
   text-align: right;
