@@ -206,14 +206,16 @@ test("la nota activa usa borde grueso y la pineada mantiene una marca propia", a
       fieldsetBorderWidth: getComputedStyle(fieldset).borderTopWidth,
       footerBorderWidth: getComputedStyle(footer).borderBottomWidth,
       outlineStyle: computed.outlineStyle,
+      outlineOffset: computed.outlineOffset,
       boxShadow: computed.boxShadow
     };
   });
 
   expect(pinnedStyle.fieldsetBorderWidth).toBe("1px");
   expect(pinnedStyle.footerBorderWidth).toBe("1px");
-  expect(pinnedStyle.outlineStyle).toBe("none");
-  expect(pinnedStyle.boxShadow).not.toBe("none");
+  expect(pinnedStyle.outlineStyle).toBe("solid");
+  expect(Number.parseFloat(pinnedStyle.outlineOffset)).toBeGreaterThan(2);
+  expect(pinnedStyle.boxShadow).toBe("none");
 
   const activeStyle = await getNote(page, 1).evaluate((note) => {
     const fieldset = note.querySelector("fieldset");
