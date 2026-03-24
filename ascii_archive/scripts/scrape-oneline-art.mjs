@@ -18,6 +18,9 @@ const requestHeaders = {
 
 const asciiArtEuRootUrl = "https://www.asciiart.eu/one-line";
 const gistRawUrl = "https://gist.githubusercontent.com/jamiew/40c66061b666272462c17f65addb14d5/raw";
+const onelineAsciiArtBlogUrl = "https://onelineasciiart.blogspot.com/";
+const asciiArtCopyUrl = "https://www.asciiartcopy.com/one-line-ascii-art.html";
+const emotesIoUrl = "https://emotes.io/";
 
 async function fetchText(url) {
   const controller = new AbortController();
@@ -62,6 +65,7 @@ function decodeHtmlEntities(value) {
     .replace(/&quot;/g, "\"")
     .replace(/&#039;/g, "'")
     .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#(\d+);/g, (_, code) => String.fromCodePoint(Number(code)))
     .replace(/&#x([0-9a-f]+);/gi, (_, code) => String.fromCodePoint(Number.parseInt(code, 16)));
@@ -90,6 +94,38 @@ function isAsciiOnly(value) {
 
 function hasPlaceholder(value) {
   return /\[(?:text|emoji)\]|your text here/i.test(value);
+}
+
+function splitArtAndLabel(rawValue) {
+  const normalized = stripOuterNewlines(String(rawValue ?? "")).replace(/\u00a0/g, " ");
+  const lines = normalized
+    .split("\n")
+    .map((line) => line.replace(/\r/g, "").replace(/[ \t]+$/g, ""))
+    .filter((line) => line.trim().length > 0);
+
+  if (!lines.length) {
+    return { art: "", title: null };
+  }
+
+  if (lines.length > 1) {
+    const lastLine = lines[lines.length - 1].trim();
+    if (/^[A-Za-z][A-Za-z0-9 '&().-]{0,60}$/.test(lastLine)) {
+      return {
+        art: lines.slice(0, -1).join("\n"),
+        title: lastLine
+      };
+    }
+  }
+
+  const inlineLabelMatch = normalized.match(/^(.*?)(?:\s{2,}|\s)([A-Za-z][A-Za-z0-9 '&().-]{0,60})$/);
+  if (inlineLabelMatch && /[^\w\s]/u.test(inlineLabelMatch[1])) {
+    return {
+      art: inlineLabelMatch[1].replace(/[ \t]+$/g, ""),
+      title: inlineLabelMatch[2].trim()
+    };
+  }
+
+  return { art: normalized, title: null };
 }
 
 function slugToLabel(slug) {
@@ -155,6 +191,76 @@ async function scrapeAsciiArtEu() {
         })
       );
     }
+  }
+
+  return records;
+}
+
+async function scrapeOnelineAsciiArtBlogspot() {
+  const html = await fetchText(onelineAsciiArtBlogUrl);
+  const recordPattern = /<div class="asciiart">\s*<span class="art">([\s\S]*?)<\/span>\s*<p>([\s\S]*?)<\/p>\s*<\/div>/g;
+  const records = [];
+
+  for (const match of html.matchAll(recordPattern)) {
+    records.push(
+      prepareRecord({
+        source: "onelineasciiart.blogspot.com",
+        source_type: "html_homepage",
+        source_url: onelineAsciiArtBlogUrl,
+        source_section: "homepage",
+        title: decodeHtmlEntities(match[2]).trim() || null,
+        art: decodeHtmlEntities(match[1])
+      })
+    );
+  }
+
+  return records;
+}
+
+async function scrapeAsciiArtCopy() {
+  const html = await fetchText(asciiArtCopyUrl);
+  const recordPattern = /<div data-type="employ" class="conceive"[^>]*>([\s\S]*?)<\/div><\/div><\/div><\/div><div class="krishna">/g;
+  const records = [];
+
+  for (const match of html.matchAll(recordPattern)) {
+    const { art, title } = splitArtAndLabel(decodeHtmlEntities(match[1]));
+
+    records.push(
+      prepareRecord({
+        source: "asciiartcopy.com",
+        source_type: "html_homepage",
+        source_url: asciiArtCopyUrl,
+        source_section: "one-line-ascii-art",
+        title,
+        art
+      })
+    );
+  }
+
+  return records;
+}
+
+async function scrapeEmotesIo() {
+  const html = await fetchText(emotesIoUrl);
+  const recordPattern = /<div class="btn([^"]*)">\s*<span class="title">([\s\S]*?)<\/span>\s*<span class="unicode">([\s\S]*?)<\/span>\s*<\/div>/g;
+  const records = [];
+
+  for (const match of html.matchAll(recordPattern)) {
+    const classNames = match[1]
+      .trim()
+      .split(/\s+/)
+      .filter((name) => name.length > 0 && name !== "btn" && name !== "popular");
+
+    records.push(
+      prepareRecord({
+        source: "emotes.io",
+        source_type: "html_homepage",
+        source_url: emotesIoUrl,
+        source_category: classNames.length ? classNames.join(" ") : null,
+        title: decodeHtmlEntities(match[2]).trim(),
+        art: decodeHtmlEntities(match[3])
+      })
+    );
   }
 
   return records;
@@ -317,6 +423,9 @@ async function main() {
 
   const scrapedGroups = await Promise.all([
     scrapeAsciiArtEu(),
+    scrapeOnelineAsciiArtBlogspot(),
+    scrapeAsciiArtCopy(),
+    scrapeEmotesIo(),
     scrapeAsky(),
     scrapeOneLineArtKulaone(),
     scrapeGist()

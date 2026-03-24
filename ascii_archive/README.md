@@ -12,6 +12,9 @@ Experimento de scraping y muestreo de `one-line ascii art` y `one-line text art`
 ## Fuentes actuales
 
 - `https://www.asciiart.eu/one-line`
+- `https://onelineasciiart.blogspot.com/`
+- `https://www.asciiartcopy.com/one-line-ascii-art.html`
+- `https://emotes.io/`
 - `https://asky.lol/`
 - `https://1lineart.kulaone.com/`
 - `https://gist.github.com/jamiew/40c66061b666272462c17f65addb14d5`
