@@ -20,6 +20,13 @@ Experimento estático para iterar el `magic engine` y sus `spells` fuera de `los
 3. Ejecutar casts del spell `ascii-note-title`.
 4. Mirar resultados, modelos, errores y exportar logs JSONL.
 
+## Qué vale la pena retener
+
+- La unidad útil no es un prompt suelto sino un `spell` con contrato, constraints y routing propios.
+- `openrouter/free` funciona mejor como portal dinámico primario que como lista dura de modelos en código.
+- La interfaz de laboratorio necesita mostrar tanto el output limpio como el payload/log de cada cast para depurar modelos gratis inestables.
+- Todo esto conviene iterarlo en sandbox estático antes de decidir qué vuelve al repo de producto.
+
 ## Publicación
 
 La web publicada no lleva secretos. La key se guarda sólo en `localStorage` del navegador de quien la use.
