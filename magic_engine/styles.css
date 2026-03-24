@@ -30,6 +30,7 @@ body {
 
 code,
 input,
+select,
 textarea,
 button,
 .pill,
@@ -151,6 +152,7 @@ dt {
 }
 
 input,
+select,
 textarea,
 button {
   border: 2px solid var(--line);
@@ -160,6 +162,7 @@ button {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   padding: 0.75rem;
@@ -197,6 +200,50 @@ button.ghost {
   gap: 0.8rem;
 }
 
+.scenario-deck,
+.result-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.scenario-deck {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.scenario-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  padding: 0.9rem;
+  border: 2px solid rgba(31, 29, 26, 0.8);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 229, 211, 0.72));
+  color: var(--ink);
+  text-align: left;
+}
+
+.scenario-card strong {
+  font-size: 0.95rem;
+  text-transform: lowercase;
+}
+
+.scenario-card span {
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.scenario-card.is-active {
+  border-color: var(--hot);
+  box-shadow: 6px 6px 0 rgba(181, 71, 37, 0.12);
+}
+
+.scenario-tags {
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .spell-meta {
   display: flex;
   flex-wrap: wrap;
@@ -211,15 +258,60 @@ button.ghost {
   background: rgba(255, 255, 255, 0.72);
 }
 
-.result-output {
-  font-size: clamp(1.3rem, 2vw, 2rem);
-  line-height: 1.1;
+.result-item {
+  padding: 0.9rem;
+  border: 2px solid rgba(31, 29, 26, 0.85);
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.result-item.is-error {
+  border-color: var(--hot);
+  background: rgba(181, 71, 37, 0.08);
+}
+
+.result-item-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.result-item-head h3 {
+  margin: 0;
+  font-size: 1rem;
+  text-transform: lowercase;
+}
+
+.result-item-summary,
+.result-error {
+  margin-top: 0.55rem;
+}
+
+.result-options {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.9rem 0 0;
+  padding-left: 1.3rem;
+}
+
+.result-options li {
+  line-height: 1.35;
+}
+
+.result-options code {
+  display: inline-block;
+  padding: 0.3rem 0.45rem;
+  border: 1px dashed rgba(31, 29, 26, 0.4);
+  background: rgba(255, 255, 255, 0.86);
+  font-size: clamp(0.95rem, 1.5vw, 1.1rem);
+  white-space: pre;
 }
 
 .result-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.7rem;
+  margin-top: 0.9rem;
 }
 
 .result-meta div {
@@ -278,6 +370,10 @@ dd {
   .split,
   .button-row {
     flex-direction: column;
+  }
+
+  .scenario-deck {
+    grid-template-columns: 1fr;
   }
 
   .result-meta {

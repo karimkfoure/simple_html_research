@@ -1,6 +1,6 @@
 import {
   assertSpellDefinition,
-  normalizeSpellTextOutput,
+  normalizeSpellOutput,
   validateInputAgainstSchema,
 } from "./contract.js";
 import { DEFAULT_MAGIC_SPELLS } from "./spellbook.js";
@@ -28,6 +28,11 @@ export function listSpells(spellbook) {
     version: spell.version,
     lane: spell.lane,
     visibility: spell.visibility,
+    label: spell.presentation?.label ?? spell.id,
+    summary: spell.presentation?.summary ?? "",
+    tags: spell.presentation?.tags ?? [],
+    requiresPhrase: Boolean(spell.presentation?.requiresPhrase),
+    defaultPhrase: spell.presentation?.defaultPhrase ?? "",
   }));
 }
 
@@ -61,7 +66,7 @@ export async function castSpell({
         random,
       });
 
-      const output = normalizeSpellTextOutput(spell, providerResult.output);
+      const output = normalizeSpellOutput(spell, providerResult.output);
 
       return {
         ok: true,

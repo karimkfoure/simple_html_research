@@ -17,8 +17,9 @@ Experimento estático para iterar el `magic engine` y sus `spells` fuera de `los
 
 1. Abrir `/magic_engine/` servido desde el root del repo.
 2. Pegar una `OpenRouter API key` en la UI.
-3. Ejecutar casts del spell `ascii-note-title`.
-4. Mirar resultados, modelos, errores y exportar logs JSONL.
+3. Elegir una variante de `one-line ascii art` o correr todas en batch.
+4. Ajustar cantidad de opciones, seed y frase semilla cuando aplique.
+5. Mirar resultados por escenario, modelos, errores y exportar logs JSONL.
 
 ## Qué vale la pena retener
 

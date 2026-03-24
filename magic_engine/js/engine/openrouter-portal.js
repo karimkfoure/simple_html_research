@@ -33,10 +33,7 @@ export function createOpenRouterPortal({
           exclude: true,
         },
         temperature: getSpellTemperature(spell),
-        max_tokens: Math.min(
-          80,
-          Math.max(40, (spell.constraints.hard?.maxChars ?? 40) * 3),
-        ),
+        max_tokens: getSpellMaxTokens(spell, input),
         seed: input.seed ? hashSeedToInteger(input.seed) : undefined,
       };
 
@@ -198,6 +195,7 @@ export async function listOpenRouterFreeModels({
 }
 
 function buildSpellMessages(spell, input) {
+  const requestedOptions = getRequestedOptionCount(spell, input);
   const lines = [
     spell.prompt.user,
     "",
@@ -206,6 +204,13 @@ function buildSpellMessages(spell, input) {
     `- Max chars: ${spell.constraints.hard.maxChars}`,
     `- Max lines: ${spell.constraints.hard.maxLines}`,
     `- Emoji allowed: ${spell.constraints.hard.allowEmoji ? "yes" : "no"}`,
+  ];
+
+  if (spell.contract.outputSchema.type === "array") {
+    lines.push(`- Options requested: ${requestedOptions}`);
+  }
+
+  lines.push(
     "",
     "Desired texture:",
     `- energy: ${spell.mood.energy}`,
@@ -213,7 +218,11 @@ function buildSpellMessages(spell, input) {
     `- warmth: ${spell.mood.warmth}`,
     `- shape: ${spell.constraints.soft.preferredShape}`,
     `- texture: ${spell.constraints.soft.preferredTexture.join(", ")}`,
-  ];
+  );
+
+  if (typeof input.phrase === "string" && input.phrase.trim()) {
+    lines.push("", `Phrase to interpret: ${input.phrase.trim()}`);
+  }
 
   if (Array.isArray(spell.prompt.examples) && spell.prompt.examples.length) {
     lines.push("", "Good examples:");
@@ -236,7 +245,7 @@ function buildSpellMessages(spell, input) {
 
   lines.push(
     "",
-    "Return only the title text. No explanation, no prefix, no markdown.",
+    buildReturnInstruction(spell, input),
   );
 
   return [
@@ -255,8 +264,8 @@ function cleanModelOutput(text) {
   return text
     .replace(/\r\n/g, "\n")
     .trim()
-    .replace(/^["'`]+|["'`]+$/g, "")
-    .replace(/^\d+[\).\-\s]+/, "")
+    .replace(/^```[\w-]*\n?/, "")
+    .replace(/\n?```$/, "")
     .trim();
 }
 
@@ -273,6 +282,48 @@ function normalizeExistingTitles(existingTitles) {
   return existingTitles
     .map((title) => String(title || "").trim())
     .filter(Boolean);
+}
+
+function buildReturnInstruction(spell, input) {
+  if (spell.contract.outputSchema.type === "array") {
+    const requestedOptions = getRequestedOptionCount(spell, input);
+    return [
+      `Return exactly ${requestedOptions} different options.`,
+      "Write exactly one option per line.",
+      "Each line must contain only the ASCII art itself.",
+      "No numbering, no bullets, no explanation, no markdown, no repeated options.",
+      "Avoid plain phrases unless a tiny amount of text is structurally unavoidable.",
+    ].join(" ");
+  }
+
+  return "Return only the title text. No explanation, no prefix, no markdown.";
+}
+
+function getRequestedOptionCount(spell, input) {
+  if (spell.contract.outputSchema.type !== "array") {
+    return 1;
+  }
+
+  const minItems = spell.contract.outputSchema.minItems ?? 1;
+  const maxItems = spell.contract.outputSchema.maxItems ?? minItems;
+  const requested = Number(input.optionCount);
+
+  if (!Number.isInteger(requested)) {
+    return Math.min(Math.max(4, minItems), maxItems);
+  }
+
+  return Math.min(Math.max(requested, minItems), maxItems);
+}
+
+function getSpellMaxTokens(spell, input) {
+  const maxChars = spell.constraints.hard?.maxChars ?? 40;
+
+  if (spell.contract.outputSchema.type !== "array") {
+    return Math.min(80, Math.max(40, maxChars * 3));
+  }
+
+  const requestedOptions = getRequestedOptionCount(spell, input);
+  return Math.min(320, Math.max(120, requestedOptions * maxChars * 2));
 }
 
 function isFreeTextModel(model) {

@@ -138,18 +138,27 @@ export function validateInputAgainstSchema(value, schema, label = "input") {
   }
 }
 
-export function normalizeSpellTextOutput(spell, rawOutput) {
-  if (spell.contract.outputSchema.type !== "string") {
-    throw new TypeError("Only string outputs are supported in this first pass");
-  }
-
+export function normalizeSpellOutput(spell, rawOutput) {
   assertString(rawOutput, "rawOutput");
 
+  const outputSchema = spell.contract.outputSchema;
+  if (outputSchema.type === "string") {
+    return normalizeSpellStringOutput(spell, rawOutput);
+  }
+
+  if (outputSchema.type === "array" && outputSchema.items?.type === "string") {
+    return normalizeSpellStringArrayOutput(spell, rawOutput);
+  }
+
+  throw new TypeError("Unsupported output schema for normalization");
+}
+
+function normalizeSpellStringOutput(spell, rawOutput) {
   const hard = spell.constraints.hard ?? {};
   const trimmedLines = rawOutput
     .replace(/\r\n/g, "\n")
     .split("\n")
-    .map((line) => normalizeWhitespace(line))
+    .map((line) => normalizeOutputLine(line))
     .filter(Boolean);
 
   if (trimmedLines.length === 0) {
@@ -196,6 +205,47 @@ export function normalizeSpellTextOutput(spell, rawOutput) {
   }
 
   return output;
+}
+
+function normalizeSpellStringArrayOutput(spell, rawOutput) {
+  const hard = spell.constraints.hard ?? {};
+  const outputSchema = spell.contract.outputSchema;
+  const itemSchema = outputSchema.items ?? {};
+  const minItems = outputSchema.minItems ?? 1;
+  const maxItems = outputSchema.maxItems ?? Infinity;
+  const rawLines = rawOutput.replace(/\r\n/g, "\n").split("\n");
+  const uniqueItems = [];
+  const seen = new Set();
+
+  for (const rawLine of rawLines) {
+    const normalized = normalizeOutputLine(rawLine);
+
+    if (!normalized) {
+      continue;
+    }
+
+    const key = normalized.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+
+    seen.add(key);
+    uniqueItems.push(normalized);
+  }
+
+  if (uniqueItems.length === 0) {
+    throw new TypeError("Spell output array is empty after trimming");
+  }
+
+  const normalizedItems = uniqueItems.slice(0, maxItems).map((item) =>
+    normalizeOutputItem(item, itemSchema, hard),
+  );
+
+  if (normalizedItems.length < minItems) {
+    throw new TypeError("Spell output has fewer items than minItems");
+  }
+
+  return normalizedItems;
 }
 
 function assertSchemaDefinition(schema, label) {
@@ -263,6 +313,10 @@ function validateObjectSchema(value, schema, label) {
 function validateArraySchema(value, schema, label) {
   if (!Array.isArray(value)) {
     throw new TypeError(`${label} must be an array`);
+  }
+
+  if (schema.minItems != null && value.length < schema.minItems) {
+    throw new TypeError(`${label} is below minItems`);
   }
 
   if (schema.maxItems != null && value.length > schema.maxItems) {
@@ -355,8 +409,57 @@ function clampTextLength(text, maxChars) {
   return text.slice(0, maxChars).trim();
 }
 
-function normalizeWhitespace(text) {
-  return text.trim().replace(/\s+/g, " ");
+function normalizeOutputItem(text, itemSchema, hard) {
+  let output = text;
+
+  if (hard.asciiOnly && /[^\x20-\x7E]/.test(output)) {
+    throw new TypeError("Spell output contains non-ASCII characters");
+  }
+
+  if (!hard.allowEmoji && /[\p{Extended_Pictographic}]/u.test(output)) {
+    throw new TypeError("Spell output contains forbidden emoji");
+  }
+
+  if (Array.isArray(hard.forbiddenSubstrings)) {
+    const lowered = output.toLowerCase();
+
+    for (const forbidden of hard.forbiddenSubstrings) {
+      if (lowered.includes(String(forbidden).toLowerCase())) {
+        throw new TypeError("Spell output contains forbidden substring");
+      }
+    }
+  }
+
+  const minChars = Math.max(hard.minChars ?? 1, itemSchema.minLength ?? 1);
+  const maxChars = Math.min(
+    hard.maxChars ?? output.length,
+    itemSchema.maxLength ?? hard.maxChars ?? output.length,
+  );
+
+  if (output.length < minChars) {
+    throw new TypeError("Spell output is shorter than minChars");
+  }
+
+  output = clampTextLength(output, maxChars);
+
+  if (output.length < minChars) {
+    throw new TypeError("Spell output is shorter than minChars after clamping");
+  }
+
+  if (itemSchema.pattern != null && !(new RegExp(itemSchema.pattern, "u")).test(output)) {
+    throw new TypeError("Spell output item does not match required pattern");
+  }
+
+  return output;
+}
+
+function normalizeOutputLine(text) {
+  return String(text || "")
+    .trim()
+    .replace(/^[-*]\s+/, "")
+    .replace(/^\d+[\).\-\s]+/, "")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
 }
 
 function assertEnumValue(value, allowedValues, label) {

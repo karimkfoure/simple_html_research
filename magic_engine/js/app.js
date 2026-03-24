@@ -1,5 +1,4 @@
 import { castSpell, createSpellbook, listSpells } from "./engine/core.js";
-import { MAGIC_SPELL_IDS } from "./engine/spellbook.js";
 import { createOpenRouterPortal, listOpenRouterFreeModels } from "./engine/openrouter-portal.js";
 import {
   appendLogEntry,
@@ -20,17 +19,20 @@ export function createMagicEngineLab() {
     clearKey: document.getElementById("clear-key"),
     refreshModels: document.getElementById("refresh-models"),
     portalStatus: document.getElementById("portal-status"),
+    spellSelect: document.getElementById("spell-select"),
+    spellDeck: document.getElementById("spell-deck"),
     existingTitles: document.getElementById("existing-titles"),
     noteCount: document.getElementById("note-count"),
+    optionCount: document.getElementById("option-count"),
     seed: document.getElementById("seed"),
+    phraseLabel: document.getElementById("phrase-label"),
+    phrase: document.getElementById("phrase"),
     castSpell: document.getElementById("cast-spell"),
+    castAllSpells: document.getElementById("cast-all-spells"),
     clearResults: document.getElementById("clear-results"),
     resultEmpty: document.getElementById("result-empty"),
-    resultBody: document.getElementById("result-body"),
-    resultOutput: document.getElementById("result-output"),
-    resultModel: document.getElementById("result-model"),
-    resultTokens: document.getElementById("result-tokens"),
-    resultStatus: document.getElementById("result-status"),
+    resultSummary: document.getElementById("result-summary"),
+    resultList: document.getElementById("result-list"),
     modelList: document.getElementById("model-list"),
     exportLog: document.getElementById("export-log"),
     clearLog: document.getElementById("clear-log"),
@@ -39,8 +41,10 @@ export function createMagicEngineLab() {
 
   const state = {
     apiKey: loadSavedApiKey(),
-    lastResult: null,
+    results: [],
     spellbook: listSpells(spellbook),
+    selectedSpellId: null,
+    isRunning: false,
   };
 
   bindEvents();
@@ -51,8 +55,9 @@ export function createMagicEngineLab() {
       return {
         apiKeySaved: Boolean(state.apiKey),
         spellbook: state.spellbook,
+        selectedSpellId: state.selectedSpellId,
         logs: listLogEntries(),
-        lastResult: state.lastResult,
+        results: state.results,
       };
     },
   };
@@ -79,13 +84,33 @@ export function createMagicEngineLab() {
       await refreshModels();
     });
 
+    elements.spellSelect.addEventListener("change", () => {
+      state.selectedSpellId = elements.spellSelect.value;
+      renderScenarioControls();
+    });
+
+    elements.spellDeck.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-spell-id]");
+
+      if (!button) {
+        return;
+      }
+
+      state.selectedSpellId = button.dataset.spellId;
+      renderScenarioControls();
+    });
+
     elements.castSpell.addEventListener("click", async () => {
-      await runSpell();
+      await runSelectedSpell();
+    });
+
+    elements.castAllSpells.addEventListener("click", async () => {
+      await runAllSpells();
     });
 
     elements.clearResults.addEventListener("click", () => {
-      state.lastResult = null;
-      renderResult();
+      state.results = [];
+      renderResults();
     });
 
     elements.exportLog.addEventListener("click", () => {
@@ -99,15 +124,79 @@ export function createMagicEngineLab() {
   }
 
   function syncInitialState() {
+    state.selectedSpellId = state.spellbook[0]?.id ?? null;
     elements.apiKey.value = state.apiKey;
     renderPortalStatus();
-    renderResult();
-    renderLog();
     renderSpellbookHint();
+    renderSpellSelector();
+    renderScenarioDeck();
+    renderScenarioControls();
+    renderResults();
+    renderLog();
   }
 
   function renderSpellbookHint() {
-    document.title = `magic_engine_lab (${state.spellbook.length} spell)`;
+    document.title = `magic_engine_lab (${state.spellbook.length} escenarios)`;
+  }
+
+  function renderSpellSelector() {
+    elements.spellSelect.innerHTML = "";
+
+    for (const spell of state.spellbook) {
+      const option = document.createElement("option");
+      option.value = spell.id;
+      option.textContent = spell.label;
+      if (spell.id === state.selectedSpellId) {
+        option.selected = true;
+      }
+      elements.spellSelect.append(option);
+    }
+  }
+
+  function renderScenarioDeck() {
+    elements.spellDeck.innerHTML = "";
+
+    for (const spell of state.spellbook) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = spell.id === state.selectedSpellId ? "scenario-card is-active" : "scenario-card";
+      button.dataset.spellId = spell.id;
+
+      const heading = document.createElement("strong");
+      heading.textContent = spell.label;
+      button.append(heading);
+
+      const summary = document.createElement("span");
+      summary.textContent = spell.summary;
+      button.append(summary);
+
+      const tagRow = document.createElement("span");
+      tagRow.className = "scenario-tags";
+      tagRow.textContent = spell.tags.join(" / ");
+      button.append(tagRow);
+
+      elements.spellDeck.append(button);
+    }
+  }
+
+  function renderScenarioControls() {
+    renderSpellSelector();
+    renderScenarioDeck();
+
+    const spell = getSelectedSpell();
+    if (!spell) {
+      return;
+    }
+
+    elements.phraseLabel.textContent = spell.requiresPhrase
+      ? "Frase obligatoria a interpretar"
+      : "Frase / escena opcional";
+
+    if (!elements.phrase.value && spell.defaultPhrase) {
+      elements.phrase.placeholder = spell.defaultPhrase;
+    } else if (!spell.defaultPhrase) {
+      elements.phrase.placeholder = "night train with paper ghosts";
+    }
   }
 
   function renderPortalStatus(message = null) {
@@ -121,32 +210,93 @@ export function createMagicEngineLab() {
       : "sin key guardada";
   }
 
-  function renderResult() {
-    if (!state.lastResult) {
+  function renderResults() {
+    elements.resultList.innerHTML = "";
+
+    if (state.results.length === 0) {
       elements.resultEmpty.hidden = false;
-      elements.resultBody.hidden = true;
-      elements.resultOutput.textContent = "";
-      elements.resultModel.textContent = "-";
-      elements.resultTokens.textContent = "-";
-      elements.resultStatus.textContent = "-";
+      elements.resultSummary.textContent = "";
       return;
     }
 
     elements.resultEmpty.hidden = true;
-    elements.resultBody.hidden = false;
-    elements.resultOutput.textContent = state.lastResult.output;
-    elements.resultModel.textContent = state.lastResult.source.model;
-    elements.resultTokens.textContent = String(state.lastResult.usage?.total_tokens ?? "-");
-    elements.resultStatus.textContent = "ok";
+    const okCount = state.results.filter((result) => result.ok).length;
+    elements.resultSummary.textContent = `${okCount}/${state.results.length} escenarios con salida valida`;
+
+    for (const result of state.results) {
+      const card = document.createElement("article");
+      card.className = result.ok ? "result-item" : "result-item is-error";
+
+      const header = document.createElement("div");
+      header.className = "result-item-head";
+
+      const title = document.createElement("h3");
+      title.textContent = result.label;
+      header.append(title);
+
+      const status = document.createElement("span");
+      status.className = "pill";
+      status.textContent = result.ok ? "ok" : "error";
+      header.append(status);
+      card.append(header);
+
+      const summary = document.createElement("p");
+      summary.className = "result-item-summary";
+      summary.textContent = result.summary;
+      card.append(summary);
+
+      if (result.ok) {
+        const list = document.createElement("ol");
+        list.className = "result-options";
+
+        for (const option of normalizeOptions(result.output)) {
+          const item = document.createElement("li");
+          const art = document.createElement("code");
+          art.textContent = option;
+          item.append(art);
+          list.append(item);
+        }
+
+        card.append(list);
+      } else {
+        const error = document.createElement("p");
+        error.className = "result-error";
+        error.textContent = result.error;
+        card.append(error);
+      }
+
+      const meta = document.createElement("dl");
+      meta.className = "result-meta";
+
+      appendMeta(meta, "modelo", result.model ?? "-");
+      appendMeta(meta, "tokens", String(result.tokens ?? "-"));
+      appendMeta(meta, "estado", result.ok ? "ok" : "error");
+
+      card.append(meta);
+      elements.resultList.append(card);
+    }
   }
 
-  function renderResultError(message) {
-    elements.resultEmpty.hidden = true;
-    elements.resultBody.hidden = false;
-    elements.resultOutput.textContent = message;
-    elements.resultModel.textContent = "-";
-    elements.resultTokens.textContent = "-";
-    elements.resultStatus.textContent = "error";
+  function appendMeta(meta, label, value) {
+    const row = document.createElement("div");
+    const dt = document.createElement("dt");
+    dt.textContent = label;
+    const dd = document.createElement("dd");
+    dd.textContent = value;
+    row.append(dt, dd);
+    meta.append(row);
+  }
+
+  function normalizeOptions(output) {
+    if (Array.isArray(output)) {
+      return output;
+    }
+
+    if (typeof output === "string" && output.trim()) {
+      return [output];
+    }
+
+    return [];
   }
 
   function renderLog() {
@@ -190,19 +340,28 @@ export function createMagicEngineLab() {
     }
   }
 
-  async function runSpell() {
+  async function runSelectedSpell() {
+    const spell = getSelectedSpell();
+
+    if (!spell) {
+      renderPortalStatus("no hay escenario activo");
+      return;
+    }
+
+    await runSpellBatch([spell]);
+  }
+
+  async function runAllSpells() {
+    await runSpellBatch(state.spellbook);
+  }
+
+  async function runSpellBatch(spells) {
     if (!state.apiKey) {
       renderPortalStatus("guardá una key antes de correr el spell");
       return;
     }
 
-    const existingTitles = elements.existingTitles.value
-      .split("\n")
-      .map((value) => value.trim())
-      .filter(Boolean);
-    const noteCount = Number.parseInt(elements.noteCount.value || "0", 10);
-    const seed = elements.seed.value.trim();
-
+    const sharedInput = collectSharedInput();
     const portal = createOpenRouterPortal({
       apiKey: state.apiKey,
       title: "simple_html_research magic_engine lab",
@@ -212,52 +371,149 @@ export function createMagicEngineLab() {
       },
     });
 
+    state.results = [];
+    setBusy(true);
+    renderResults();
+
+    for (const spell of spells) {
+      const result = await executeSpell(spell, portal, sharedInput);
+      state.results.push(result);
+      renderResults();
+    }
+
+    setBusy(false);
+
+    const okCount = state.results.filter((result) => result.ok).length;
+    renderPortalStatus(`corrida lista: ${okCount}/${state.results.length} escenarios ok`);
+  }
+
+  async function executeSpell(spell, portal, sharedInput) {
+    const input = buildSpellInput(spell, sharedInput);
+
+    if (spell.requiresPhrase && !input.phrase) {
+      const errorMessage = "faltó la frase obligatoria para este escenario";
+      appendLogEntry({
+        type: "ui.cast.error",
+        timestamp: new Date().toISOString(),
+        spellId: spell.id,
+        message: errorMessage,
+      });
+      renderLog();
+
+      return {
+        spellId: spell.id,
+        label: spell.label,
+        summary: spell.summary,
+        ok: false,
+        error: errorMessage,
+        model: "-",
+        tokens: "-",
+      };
+    }
+
     appendLogEntry({
       type: "ui.cast.started",
       timestamp: new Date().toISOString(),
-      spellId: MAGIC_SPELL_IDS.ASCII_NOTE_TITLE,
-      input: {
-        existingTitles,
-        noteCount,
-        seed: seed || null,
-      },
+      spellId: spell.id,
+      input,
     });
     renderLog();
 
     try {
       const result = await castSpell({
         spellbook,
-        spellId: MAGIC_SPELL_IDS.ASCII_NOTE_TITLE,
-        input: {
-          existingTitles,
-          noteCount: Number.isFinite(noteCount) ? noteCount : 0,
-          seed: seed || undefined,
-        },
+        spellId: spell.id,
+        input,
         portals: {
           openrouter: portal,
         },
       });
 
-      state.lastResult = result;
       appendLogEntry({
         type: "ui.cast.result",
         timestamp: new Date().toISOString(),
         result,
       });
-      renderResult();
       renderLog();
-      renderPortalStatus(`cast ok via ${result.source.model}`);
+
+      return {
+        spellId: spell.id,
+        label: spell.label,
+        summary: spell.summary,
+        ok: true,
+        output: result.output,
+        model: result.source.model,
+        tokens: result.usage?.total_tokens ?? "-",
+      };
     } catch (error) {
-      state.lastResult = null;
       appendLogEntry({
         type: "ui.cast.error",
         timestamp: new Date().toISOString(),
+        spellId: spell.id,
         message: error.message,
         openRouter: error.openRouter ?? null,
       });
-      renderResultError(error.message);
       renderLog();
-      renderPortalStatus(error.message);
+
+      return {
+        spellId: spell.id,
+        label: spell.label,
+        summary: spell.summary,
+        ok: false,
+        error: error.message,
+        model: "-",
+        tokens: "-",
+      };
     }
+  }
+
+  function collectSharedInput() {
+    const existingTitles = elements.existingTitles.value
+      .split("\n")
+      .map((value) => value.trim())
+      .filter(Boolean);
+    const noteCount = Number.parseInt(elements.noteCount.value || "0", 10);
+    const optionCount = Number.parseInt(elements.optionCount.value || "4", 10);
+    const seed = elements.seed.value.trim();
+    const phrase = elements.phrase.value.trim();
+
+    return {
+      existingTitles,
+      noteCount: Number.isFinite(noteCount) ? noteCount : 0,
+      optionCount: Number.isFinite(optionCount) ? optionCount : 4,
+      seed,
+      phrase,
+    };
+  }
+
+  function buildSpellInput(spell, sharedInput) {
+    const input = {
+      existingTitles: sharedInput.existingTitles,
+      noteCount: sharedInput.noteCount,
+      optionCount: sharedInput.optionCount,
+    };
+
+    if (sharedInput.seed) {
+      input.seed = sharedInput.seed;
+    }
+
+    if (sharedInput.phrase) {
+      input.phrase = sharedInput.phrase;
+    } else if (spell.defaultPhrase) {
+      input.phrase = spell.defaultPhrase;
+    }
+
+    return input;
+  }
+
+  function getSelectedSpell() {
+    return state.spellbook.find((spell) => spell.id === state.selectedSpellId) ?? null;
+  }
+
+  function setBusy(isBusy) {
+    state.isRunning = isBusy;
+    elements.castSpell.disabled = isBusy;
+    elements.castAllSpells.disabled = isBusy;
+    elements.refreshModels.disabled = isBusy;
   }
 }

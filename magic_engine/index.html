@@ -13,8 +13,8 @@
         <p class="kicker">simple_html_research / experimento</p>
         <h1>magic engine lab</h1>
         <p class="lede">
-          Sandbox estático para iterar spells, prompts, outputs y logs sin ensuciar la
-          migración de <code>losdoschinos</code>.
+          Sandbox estático para iterar variantes de <code>one-line ascii art</code>, comparar
+          salidas de modelos free y depurar prompts antes de llevar algo a producto.
         </p>
       </header>
 
@@ -53,24 +53,32 @@
       <div class="grid">
         <section class="panel" aria-labelledby="spell-title">
           <div class="panel-head">
-            <h2 id="spell-title">Spell Runner</h2>
-            <p>Hoy el spell activo es <code>spark/ascii-note-title</code>.</p>
+            <h2 id="spell-title">Scenario Runner</h2>
+            <p>Probá familias distintas de prompt y también una corrida batch para compararlas.</p>
           </div>
 
           <div class="spell-card" data-testid="spell-card">
             <div class="spell-meta">
               <span class="pill">stable</span>
               <span class="pill">ascii</span>
+              <span class="pill">multi option</span>
               <span class="pill">1 line</span>
             </div>
 
             <label class="field">
-              <span>Títulos existentes</span>
+              <span>Variante activa</span>
+              <select id="spell-select" data-testid="spell-select"></select>
+            </label>
+
+            <div class="scenario-deck" id="spell-deck" data-testid="spell-deck"></div>
+
+            <label class="field">
+              <span>One-line arts existentes</span>
               <textarea
                 id="existing-titles"
                 data-testid="existing-titles"
                 rows="5"
-                placeholder="uno por línea"
+                placeholder="uno por línea para evitar repetición"
               ></textarea>
             </label>
 
@@ -88,6 +96,19 @@
               </label>
 
               <label class="field">
+                <span>Cantidad de opciones</span>
+                <input
+                  id="option-count"
+                  data-testid="option-count"
+                  type="number"
+                  min="2"
+                  max="8"
+                  step="1"
+                  value="4"
+                />
+              </label>
+
+              <label class="field">
                 <span>Seed opcional</span>
                 <input
                   id="seed"
@@ -100,8 +121,25 @@
               </label>
             </div>
 
+            <label class="field">
+              <span id="phrase-label">Frase / escena a interpretar</span>
+              <input
+                id="phrase"
+                data-testid="phrase"
+                type="text"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="night train with paper ghosts"
+              />
+            </label>
+
             <div class="button-row">
-              <button type="button" id="cast-spell" data-testid="cast-spell">cast title</button>
+              <button type="button" id="cast-spell" data-testid="cast-spell">
+                correr variante
+              </button>
+              <button type="button" id="cast-all-spells" data-testid="cast-all-spells">
+                correr todas
+              </button>
               <button type="button" id="clear-results" class="ghost" data-testid="clear-results">
                 limpiar resultados
               </button>
@@ -111,28 +149,13 @@
 
         <section class="panel" aria-labelledby="result-title">
           <div class="panel-head">
-            <h2 id="result-title">Último Cast</h2>
-            <p>Salida limpia, metadata y estado del provider.</p>
+            <h2 id="result-title">Resultados</h2>
+            <p>Salida limpia por escenario, con varias opciones candidatas para elegir.</p>
           </div>
           <div class="result-card" data-testid="result-card">
             <p class="empty-state" id="result-empty">todavía no corriste nada</p>
-            <div id="result-body" hidden>
-              <p class="result-output" id="result-output"></p>
-              <dl class="result-meta">
-                <div>
-                  <dt>modelo</dt>
-                  <dd id="result-model">-</dd>
-                </div>
-                <div>
-                  <dt>tokens</dt>
-                  <dd id="result-tokens">-</dd>
-                </div>
-                <div>
-                  <dt>estado</dt>
-                  <dd id="result-status">-</dd>
-                </div>
-              </dl>
-            </div>
+            <p class="hint" id="result-summary" data-testid="result-summary"></p>
+            <div class="result-list" id="result-list" data-testid="result-list"></div>
           </div>
         </section>
       </div>
