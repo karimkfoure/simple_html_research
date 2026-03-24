@@ -1,0 +1,29 @@
+{
+  "generated_at": "2026-03-24T00:47:12.368Z",
+  "output_jsonl": "ascii_archive/data/oneline-art.jsonl",
+  "totals": {
+    "records": 1329,
+    "unique_art_exact": 1163,
+    "ascii_only": 640,
+    "unicode_or_extended": 689,
+    "probable_placeholders": 7
+  },
+  "sources": [
+    {
+      "source": "1lineart.kulaone.com",
+      "count": 383
+    },
+    {
+      "source": "asciiart.eu",
+      "count": 488
+    },
+    {
+      "source": "asky.lol",
+      "count": 215
+    },
+    {
+      "source": "gist.github.com/jamiew",
+      "count": 243
+    }
+  ]
+}

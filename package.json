@@ -3,6 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "ascii:scrape": "node ascii_archive/scripts/scrape-oneline-art.mjs",
+    "ascii:sample": "node ascii_archive/scripts/sample-oneline-art.mjs",
     "build:pages": "node scripts/build-pages.mjs",
     "test:e2e": "playwright test",
     "test:e2e:headed": "playwright test --headed",

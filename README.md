@@ -31,6 +31,16 @@ Repo de experimentos HTML estáticos, simples y deployables.
   - Spec local: [magic_engine/AGENTS.md](./magic_engine/AGENTS.md)
   - Tests locales: [magic_engine/tests/magic_engine.spec.js](./magic_engine/tests/magic_engine.spec.js)
 
+## Experimentos No Publicados
+
+- `ascii_archive`
+  - Experimento Node-only para scrapear catálogos públicos de `one-line ascii art` y consolidarlos en `jsonl`.
+  - README local: [ascii_archive/README.md](./ascii_archive/README.md)
+  - Scraper: [ascii_archive/scripts/scrape-oneline-art.mjs](./ascii_archive/scripts/scrape-oneline-art.mjs)
+  - Sampler: [ascii_archive/scripts/sample-oneline-art.mjs](./ascii_archive/scripts/sample-oneline-art.mjs)
+  - Dataset generado: [ascii_archive/data/oneline-art.jsonl](./ascii_archive/data/oneline-art.jsonl)
+  - Resumen generado: [ascii_archive/data/oneline-art-summary.json](./ascii_archive/data/oneline-art-summary.json)
+
 ## Deploy
 
 - El sitio se publica con GitHub Pages vía GitHub Actions.
@@ -47,6 +57,7 @@ Repo de experimentos HTML estáticos, simples y deployables.
 - Para simular el sitio publicado completo, servir el root del repo con un servidor estático mínimo.
 - No hay build step.
 - No hay dependencias de runtime.
+- Los experimentos Node-only se corren directo con `node` o vía scripts de `npm`.
 
 ## Testing
 
@@ -57,6 +68,8 @@ Repo de experimentos HTML estáticos, simples y deployables.
 - Hay variantes opcionales: `npm run test:e2e:headed` y `npm run test:e2e:ui`.
 - La suite levanta el root del repo como sitio estático local y cubre desktop + WebKit mobile.
 - Los tests de `perfect_notes` viven dentro de [perfect_notes/tests/perfect_notes.spec.js](./perfect_notes/tests/perfect_notes.spec.js).
+- Para regenerar el corpus de `ascii_archive`, usar `npm run ascii:scrape`.
+- Para samplear piezas del corpus, usar `npm run ascii:sample -- --count=10`.
 
 ## Notas
 
